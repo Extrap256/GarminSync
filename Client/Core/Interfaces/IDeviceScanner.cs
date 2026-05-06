@@ -1,7 +1,12 @@
-﻿namespace Client.Core.Interfaces
+﻿using Client.Core.Interfaces.DTO;
+
+namespace Client.Core.Interfaces
 {
     public interface IDeviceScanner
     {
-        // add
+        /// <summary>
+        /// Сканируем систему на наличие подключенного устройства Garmin
+        /// </summary>
+        Task<IReadOnlyList<DeviceInfo>> ScanAsync(CancellationToken ct = default);
     }
 }

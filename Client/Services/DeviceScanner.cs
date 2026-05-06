@@ -1,6 +1,8 @@
-﻿namespace Client.Services
+﻿using Client.Core.Interfaces;
+
+namespace Client.Services
 {
-    public class DeviceScanner
+    public class DeviceScanner : IDeviceScanner
     {
         //add
     }

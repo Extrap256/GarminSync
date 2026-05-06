@@ -1,7 +1,11 @@
-﻿namespace Client.Core.Interfaces
+﻿using Client.Storage.Models;
+namespace Client.Core.Interfaces
 {
     public interface IFitParser
     {
-        //add
+        /// <summary>
+        /// Парсит .fit файл и возвращает класс сущности тренировки
+        /// </summary>
+        Task<Workout> ParseAsync(string filePath, CancellationToken ct = default);
     }
 }

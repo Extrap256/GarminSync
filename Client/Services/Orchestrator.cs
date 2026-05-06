@@ -1,6 +1,8 @@
-﻿namespace Client.Services
+﻿using Client.Core.Interfaces;
+
+namespace Client.Services
 {
-    public class Orchestrator
+    public class Orchestrator : ISyncOrchestrator
     {
         //add
     }

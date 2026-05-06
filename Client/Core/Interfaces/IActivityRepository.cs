@@ -1,7 +1,24 @@
-﻿namespace Client.Core.Interfaces
+﻿using Client.Storage.Models;
+
+namespace Client.Core.Interfaces
 {
     public interface IActivityRepository
     {
-        // add
+        /// <summary>
+        /// Проверка на существование тренировки
+        /// </summary>
+        /// <param name="identifier">Уникальное поле тренировки</param>
+        Task<bool> ExistByIdentifierAsync(string identifier, CancellationToken ct = default);
+
+        /// <summary>
+        /// Добавление сущности тренировки в БД контекст
+        /// </summary>
+        /// <param name="workout">Сущность тренировки</param>
+        Task AddAsync(Workout workout, CancellationToken ct = default);
+
+        /// <summary>
+        /// Сохранение изменений в БД
+        /// </summary>
+        Task SaveChangeAsync(CancellationToken ct = default);
     }
 }
