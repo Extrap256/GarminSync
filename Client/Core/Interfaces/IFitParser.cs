@@ -1,4 +1,5 @@
-﻿using Client.Storage.Models;
+﻿using Client.Core.Interfaces.DTO;
+using Client.Storage.Models;
 namespace Client.Core.Interfaces
 {
     public interface IFitParser
@@ -6,6 +7,6 @@ namespace Client.Core.Interfaces
         /// <summary>
         /// Парсит .fit файл и возвращает класс сущности тренировки
         /// </summary>
-        Task<Workout> ParseAsync(string filePath, CancellationToken ct = default);
+        Task<FitDataCollector> ParseAsync(string filePath, CancellationToken ct = default);
     }
 }

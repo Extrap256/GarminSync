@@ -2,6 +2,6 @@
 {
     public class LapRunning : Lap
     {
-        public byte? AvrCadence {  get; set; }
+        public byte? AvgCadence {  get; set; }
     }
 }

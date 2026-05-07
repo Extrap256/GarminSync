@@ -2,7 +2,7 @@
 {
     public class LapCycling : Lap
     {
-        public byte? Cadence { get; set; }
-        public int? AvrPower { get; set; }
+        public byte? AvgCadence { get; set; }
+        public int? AvgPower { get; set; }
     }
 }
