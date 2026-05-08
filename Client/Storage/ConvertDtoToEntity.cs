@@ -46,6 +46,8 @@ namespace Client.Storage
                 return lapResult;
             }).ToList();
 
+            workout.SetIdentifier();
+
             return workout;
         }
 

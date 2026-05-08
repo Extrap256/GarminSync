@@ -1,18 +1,18 @@
 ﻿using Client.Core.Interfaces;
 using Client.Core.Interfaces.DTO;
+using Client.Storage;
+using Client.Storage.Models;
 
 namespace Client.Services
 {
     public class Orchestrator : ISyncOrchestrator
     {
-        private IDeviceScanner _deviceScanner;
-        private IFitParser _fitParser;
-        private IActivityRepository _activityRepository;
-        private IAppUI _ui;
+        private readonly IFitParser _fitParser;
+        private readonly IActivityRepository _activityRepository;
+        private readonly IAppUI _ui;
 
-        public Orchestrator(IDeviceScanner deviceScanner, IFitParser fitParser, IActivityRepository activityRepository, IAppUI appUI)
+        public Orchestrator(IFitParser fitParser, IActivityRepository activityRepository, IAppUI appUI)
         {
-            _deviceScanner = deviceScanner;
             _fitParser = fitParser;
             _activityRepository = activityRepository;
             _ui = appUI;
@@ -62,15 +62,36 @@ namespace Client.Services
                         continue;
                     }
 
+                    Workout workout = ConvertDtoToEntity.FitDataCollectorToWorkout(dto);
 
+                    await _activityRepository.AddAsync(workout, ct);
+                    processed++;
                 }
-                catch (Exception)
+                catch (OperationCanceledException)
                 {
-
-                    throw;
+                    // Пользователь затребовал
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    errors.Add($"{fileName}: {ex.Message}");
                 }
             }
 
+            if (processed > 0)
+            {
+                try
+                {
+                    await _activityRepository.SaveChangeAsync(ct);
+                    _ui.ShowMessage($"В локальную базу сохранено тренировок: {processed}");
+                }
+                catch (Exception ex)
+                {
+                    errors.Add($"Ошибка сохранения в БД: {ex.Message}");
+                }
+            }
+
+            return new SyncResult(processed, skipped, errors);
         }
     }
 }
