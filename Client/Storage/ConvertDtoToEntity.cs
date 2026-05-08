@@ -33,8 +33,18 @@ namespace Client.Storage
             workout.AvgHeartRate = fitDataCollector.AvgHeartRate;
             workout.ElevationGain = fitDataCollector.ElevationGain;
             workout.Description = null;
-            workout.WorkoutSamples = fitDataCollector.RecordDataCollections.Select(record => RecordDataCollectionToWorkoutSamples(record, fitDataCollector.SportType ?? SportTypes.Other, workout.TimeStart)).ToList();
-            workout.Laps = fitDataCollector.LapDataCollections.Select(lap => LapDataCollectionToLap(lap, fitDataCollector.SportType ?? SportTypes.Other, workout.TimeStart)).ToList();
+            workout.WorkoutSamples = fitDataCollector.RecordDataCollections.Select(record =>
+            {
+                var workOutSamples = RecordDataCollectionToWorkoutSamples(record, fitDataCollector.SportType ?? SportTypes.Other, workout.TimeStart);
+                workOutSamples.Workout = workout;
+                return workOutSamples;
+            }).ToList();
+            workout.Laps = fitDataCollector.LapDataCollections.Select(lap => 
+            {
+                var lapResult = LapDataCollectionToLap(lap, fitDataCollector.SportType ?? SportTypes.Other, workout.TimeStart);
+                lapResult.Workout = workout;
+                return lapResult;
+            }).ToList();
 
             return workout;
         }
