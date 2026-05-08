@@ -32,14 +32,6 @@ namespace Client.Storage
             this._connectionString = connectionString;
 
             Database.EnsureCreated();
-
-            this.Users.Add(new User()
-            {
-                FirstName = "Salavat",
-                LastName = "Kutlov",
-                YearOfBirth = 2004,
-                Hash = "12345"
-            });
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
