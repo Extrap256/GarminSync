@@ -11,8 +11,8 @@
         public DeviceData DeviceData { get; set; } = new();
         public DateTime? TimeStart { get; set; }
         public DateTime? TimeEnd { get; set; }
-        public int? DistanceMeters { get; set; }
-        public float? AvgSpeed { get; set; }
+        public uint? DistanceMeters { get; set; }
+        public uint? AvgSpeedMetersPerHour { get; set; }
         public byte? AvgHeartRate { get; set; }
         public ushort? ElevationGain { get; set; }
 
@@ -21,9 +21,19 @@
         public int? AvgCadence { get; set; }
         public SkiStyle? StyleOfSkiing { get; set; }
 
-        public Dynastream.Fit.Sport? SportType { get; set; }
+        public SportTypes? SportType { get; set; }
 
         public List<RecordDataCollection> RecordDataCollections { get; set; } = new();
         public List<LapDataCollection> LapDataCollections { get; set; } = new();
+
+        public string GetIdentifier()
+        {
+            if (!DeviceData.SerialNumber.HasValue)
+                throw new NullReferenceException("Поле SerialNumber не содержит данных");
+            if (!TimeStart.HasValue)
+                throw new NullReferenceException("Поле TimeStart не содержит данных");
+
+            return $"{DeviceData.SerialNumber}_{TimeStart}";
+        }
     }
 }

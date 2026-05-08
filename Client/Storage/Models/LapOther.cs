@@ -1,7 +1,7 @@
 ﻿namespace Client.Storage.Models
 {
-    public class LapSkiing : Lap
+    public class LapOther : Lap
     {
-
+        // Ничего
     }
 }

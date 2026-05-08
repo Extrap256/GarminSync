@@ -9,6 +9,7 @@ namespace Client.Storage.Models
         [Key]
         public int WorkoutSamplesId { get; set; }
         public int WorkoutId {  get; set; }
+        public Workout? Workout { get; set; }
         public uint? TimeSeconds {  get; set; }
         public uint? DistanceMeters {  get; set; }
         public uint? SpeedMetersPerHour { get; set; }

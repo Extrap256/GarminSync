@@ -2,7 +2,7 @@
 {
     public class WorkoutCycling : Workout
     {
-        public float? AvrPower {  get; set; }
-        public int? AvrCadence { get; set; }
+        public float? AvgPower {  get; set; }
+        public int? AvgCadence { get; set; }
     }
 }

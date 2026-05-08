@@ -2,6 +2,6 @@
 {
     public class WorkoutRunning : Workout
     {
-        public int? AvrCadence { get; set; }
+        public int? AvgCadence { get; set; }
     }
 }

@@ -54,7 +54,7 @@ namespace Client.Services
                 AvgHeartRate = msg?.GetAvgHeartRate(),
                 AvgPower = msg?.GetAvgPower(),
                 AvgSpeedMetersPerHour = (uint?)(msg?.GetAvgSpeed() * 3600),
-                DistanceMeters = (int?)msg?.GetTotalDistance(),
+                DistanceMeters = (uint?)msg?.GetTotalDistance(),
                 ElevationGain = msg?.GetTotalAscent(),
             };
 
@@ -71,12 +71,18 @@ namespace Client.Services
         {
             var msg = e.mesg as SessionMesg;
 
-            fitDataCollector.SportType = msg?.GetSport() ?? Sport.All;
+            fitDataCollector.SportType = msg?.GetSport() switch 
+            { 
+                Sport.Running => SportTypes.Running,
+                Sport.Cycling=> SportTypes.Cycling,
+                Sport.CrossCountrySkiing => SportTypes.Skiing,
+                _ => SportTypes.Other
+            };
 
-            fitDataCollector.DistanceMeters = (int?)msg?.GetTotalDistance();
+            fitDataCollector.DistanceMeters = (uint?)msg?.GetTotalDistance();
             fitDataCollector.TimeStart = msg?.GetStartTime().GetDateTime();
             fitDataCollector.TimeEnd = msg?.GetStartTime().GetDateTime().AddSeconds((double?)msg?.GetTotalElapsedTime() ?? 0);
-            fitDataCollector.AvgSpeed = msg?.GetAvgSpeed();
+            fitDataCollector.AvgSpeedMetersPerHour = (uint?)(msg?.GetAvgSpeed() * 3600);
             fitDataCollector.AvgHeartRate = msg?.GetAvgHeartRate();
             fitDataCollector.ElevationGain = msg?.GetTotalAscent();
 
@@ -90,7 +96,7 @@ namespace Client.Services
 
             RecordDataCollection record = new()
             {
-                TimeSeconds = msg?.GetTimestamp().GetDateTime(),
+                Time = msg?.GetTimestamp().GetDateTime(),
                 DistanceMeters = (uint?)msg?.GetDistance(),
                 Altitude = (ushort?)msg?.GetAltitude(),
                 Cadence = msg?.GetCadence(),

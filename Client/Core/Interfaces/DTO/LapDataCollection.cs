@@ -3,7 +3,7 @@
     public class LapDataCollection
     {
         public DateTime? Time { get; set; }
-        public int? DistanceMeters { get; set; }
+        public uint? DistanceMeters { get; set; }
         public uint? AvgSpeedMetersPerHour { get; set; }
         public byte? AvgHeartRate { get; set; }
         public ushort? ElevationGain { get; set; }

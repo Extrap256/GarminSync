@@ -9,9 +9,10 @@ namespace Client.Storage.Models
         [Key]
         public int LapId {  get; set; }
         public int WorkoutId {  get; set; }
-        public uint TimeStartSeconds {  get; set; }
-        public int? DistanceMeters {  get; set; }
-        public int? AvrSpeedMetersPerHour {  get; set; }
+        public Workout? Workout { get; set; }
+        public DateTime TimeStart {  get; set; }
+        public uint? DistanceMeters {  get; set; }
+        public uint? AvrSpeedMetersPerHour {  get; set; }
         public byte? AvrHeartRate {  get; set; }
         public int? ElevationGain {  get; set; }
     }

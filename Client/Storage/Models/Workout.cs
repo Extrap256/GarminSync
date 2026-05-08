@@ -7,15 +7,17 @@ namespace Client.Storage.Models
     [Index("TimeStart", IsDescending = [true])]
     public abstract class Workout
     {
+        private string _identifier;
         [Key]
         public int WorkoutId {  get; set; }
         public int DeviceId {  get; set; }
-        public string Identifier { get; set; } = string.Empty;  // DeviceId_TimeStart
+        public Device? Device { get; set; }
+        public string Identifier { get => _identifier; }  // DeviceId_TimeStart
         public DateTime TimeStart {  get; set; }
         public DateTime TimeEnd { get; set; }
-        public float? DistanceKiloMeters {  get; set; }
-        public int? AvrSpeedMetersPerHour {  get; set; }
-        public byte? AvrHeartRate {  get; set; }
+        public uint? DistanceMeters {  get; set; }
+        public uint? AvgSpeedMetersPerHour {  get; set; }
+        public byte? AvgHeartRate {  get; set; }
         public int? ElevationGain {  get; set; }
         public string? Description {  get; set; }
 
@@ -30,7 +32,7 @@ namespace Client.Storage.Models
             if (TimeStart == default)
                 throw new InvalidOperationException("TimeStart must be set");
 
-            Identifier = $"{DeviceId}_{TimeStart}";
+            _identifier = $"{DeviceId}_{TimeStart}";
         }
     }
 }

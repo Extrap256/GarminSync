@@ -18,13 +18,13 @@ namespace Client.Storage
 
         public DbSet<WorkoutSamples> WorkoutSamples { get; set; } = null!;
         public DbSet<WorkoutSamplesRunning> WorkoutSamplesRunnings { get; set; } = null!;
-        public DbSet<WorkoutSamplesCicling> WorkoutSamplesCiclings { get; set; } = null!;
+        public DbSet<WorkoutSamplesCycling> WorkoutSamplesCiclings { get; set; } = null!;
         public DbSet<WorkoutSamplesOther> WorkoutSamplesOthers { get; set; } = null!;
 
         public DbSet<Lap> Laps { get; set; } = null!;
         public DbSet<LapCycling> LapCyclings { get; set; } = null!;
         public DbSet<LapRunning> LapRunnings { get; set; } = null!;
-        public DbSet<LapSkiing> LapSkiings { get; set; } = null!;
+        public DbSet<LapOther> LapSkiings { get; set; } = null!;
         
         
         public LocalDataBaseContext(string connectionString)
