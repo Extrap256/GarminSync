@@ -87,7 +87,7 @@ namespace Client.Services
                 }
                 catch (Exception ex)
                 {
-                    errors.Add($"Ошибка сохранения в БД: {ex.Message}");
+                    errors.Add($"Ошибка сохранения в БД: {ex.Message}{"_" + ex.InnerException?.Message}");
                 }
             }
 
