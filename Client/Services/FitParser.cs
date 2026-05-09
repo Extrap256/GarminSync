@@ -121,6 +121,7 @@ namespace Client.Services
         {
             // нечего
         }
+        
         static public void OnActivityMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
         {
             var msg = new ActivityMesg(e.mesg);
