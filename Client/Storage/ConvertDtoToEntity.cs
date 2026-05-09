@@ -25,7 +25,8 @@ namespace Client.Storage
                 },
                 _ => new WorkoutOther()
             };
-
+            
+            workout.SerialNumberDevice = fitDataCollector.DeviceData.SerialNumber ?? 0;
             workout.TimeStart = fitDataCollector.TimeStart ?? DateTime.Now;
             workout.TimeEnd = fitDataCollector.TimeEnd ?? DateTime.Now;
             workout.DistanceMeters = fitDataCollector.DistanceMeters;
@@ -33,6 +34,8 @@ namespace Client.Storage
             workout.AvgHeartRate = fitDataCollector.AvgHeartRate;
             workout.ElevationGain = fitDataCollector.ElevationGain;
             workout.Description = null;
+
+
             workout.WorkoutSamples = fitDataCollector.RecordDataCollections.Select(record =>
             {
                 var workOutSamples = RecordDataCollectionToWorkoutSamples(record, fitDataCollector.SportType ?? SportTypes.Other, workout.TimeStart);

@@ -29,7 +29,7 @@ namespace Client.Services
                         devices.Add(new(
                             Label: string.IsNullOrEmpty(drive.VolumeLabel) ? "Без названия" : drive.VolumeLabel,
                             DrivePath: drive.Name,
-                            Activities: fullPath));
+                            ActivitiesPath: fullPath));
                     }
                 }
             }

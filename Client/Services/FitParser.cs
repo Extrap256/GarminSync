@@ -12,12 +12,16 @@ namespace Client.Services
             token.ThrowIfCancellationRequested();
 
             var fileInfo = new FileInfo(filePath);
+
             if (!fileInfo.Exists)
                 throw new FileNotFoundException(filePath);
 
             Decode decoder = new();
             MesgBroadcaster broadcaster = new();
-            FitDataCollector fitDataCollector = new ();
+            FitDataCollector fitDataCollector = new();
+
+            decoder.MesgEvent += broadcaster.OnMesg;
+            decoder.MesgDefinitionEvent += broadcaster.OnMesgDefinition;
 
             //broadcaster.ActivityMesgEvent += (s, e) => OnActivityMesg(e, fitDataCollector);
             //broadcaster.DeviceInfoMesgEvent += (s, e) => OnDeviceInfoMesg(e, fitDataCollector);

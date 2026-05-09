@@ -10,7 +10,8 @@ namespace Client.Storage.Models
         private string _identifier;
         [Key]
         public int WorkoutId {  get; set; }
-        public int DeviceId {  get; set; }
+        //public int DeviceId {  get; set; }
+        public uint SerialNumberDevice {  get; set; }
         public Device? Device { get; set; }
         public string Identifier { get => _identifier; }  // DeviceId_TimeStart
         public DateTime TimeStart {  get; set; }
@@ -26,13 +27,13 @@ namespace Client.Storage.Models
 
         public void SetIdentifier()
         {
-            if (DeviceId <= 0)
+            if (SerialNumberDevice == 0)
                 throw new InvalidOperationException("DeviceId must be set");
 
             if (TimeStart == default)
                 throw new InvalidOperationException("TimeStart must be set");
 
-            _identifier = $"{DeviceId}_{TimeStart}";
+            _identifier = $"{SerialNumberDevice}_{TimeStart}";
         }
     }
 }

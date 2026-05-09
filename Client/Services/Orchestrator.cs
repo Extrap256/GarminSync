@@ -20,7 +20,7 @@ namespace Client.Services
 
         public async Task<SyncResult> RunAsync(string activitiesFolderPath, CancellationToken ct = default)
         {
-            if (Directory.Exists(activitiesFolderPath))
+            if (!Directory.Exists(activitiesFolderPath))
                 throw new DirectoryNotFoundException(activitiesFolderPath);
 
             var fitsFilesPaths = Directory.GetFiles(activitiesFolderPath, "*.fit", SearchOption.TopDirectoryOnly);
@@ -87,7 +87,7 @@ namespace Client.Services
                 }
                 catch (Exception ex)
                 {
-                    errors.Add($"Ошибка сохранения в БД: {ex.Message}{"_" + ex.InnerException?.Message}");
+                    errors.Add($"Ошибка сохранения в БД: {ex.Message}{"_" + ex.InnerException?.Message ?? "null"}");
                 }
             }
 

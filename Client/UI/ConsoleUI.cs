@@ -25,7 +25,7 @@ namespace Client.UI
             {
                 var device = devices[i];
                 Console.WriteLine($"\t[{i + 1}] {device.Label}");
-                Console.WriteLine($"\tПуть: {device.Activities}");
+                Console.WriteLine($"\tПуть: {device.ActivitiesPath}");
 
                 if (ct.IsCancellationRequested)
                     return null;

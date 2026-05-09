@@ -12,5 +12,6 @@ namespace Client.Core.Interfaces
         void ShowMessage(string message);
         void ShowError(string message);
         void ShowProgress(string fileName, int current, int total);
+        void ShowHeader();
     }
 }

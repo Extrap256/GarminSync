@@ -5,37 +5,29 @@ namespace Client.Storage
 {
     public class LocalDataBaseContext : DbContext
     {
-        private string _connectionString;
-
-        public DbSet<User> Users { get; set; } = null!;
-
-        public DbSet<Device> Devices { get; set; } = null!;
-
+        //public DbSet<User> Users { get; set; } = null!;
+        //public DbSet<Device> Devices { get; set; } = null!;
         public DbSet<Workout> Workouts { get; set; } = null!;
         public DbSet<WorkoutRunning> WorkoutRunnings { get; set; } = null!;
         public DbSet<WorkoutCycling> WorkoutCyclings { get; set; } = null!;
         public DbSet<WorkoutSkiing> WorkoutSkiings { get; set; } = null!;
-
         public DbSet<WorkoutSamples> WorkoutSamples { get; set; } = null!;
         public DbSet<WorkoutSamplesRunning> WorkoutSamplesRunnings { get; set; } = null!;
         public DbSet<WorkoutSamplesCycling> WorkoutSamplesCiclings { get; set; } = null!;
         public DbSet<WorkoutSamplesOther> WorkoutSamplesOthers { get; set; } = null!;
-
         public DbSet<Lap> Laps { get; set; } = null!;
         public DbSet<LapCycling> LapCyclings { get; set; } = null!;
         public DbSet<LapRunning> LapRunnings { get; set; } = null!;
         public DbSet<LapOther> LapSkiings { get; set; } = null!;
-        
-        
-        public LocalDataBaseContext(string connectionString)
-        {
-            this._connectionString = connectionString;
 
+        public LocalDataBaseContext(DbContextOptions<LocalDataBaseContext> options)
+            : base(options)
+        {
             Database.EnsureCreated();
         }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            optionsBuilder.UseSqlite(_connectionString);
+            base.OnModelCreating(modelBuilder);
         }
     }
 }
