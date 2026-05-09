@@ -23,7 +23,7 @@ namespace Client.Services
             decoder.MesgEvent += broadcaster.OnMesg;
             decoder.MesgDefinitionEvent += broadcaster.OnMesgDefinition;
 
-            //broadcaster.ActivityMesgEvent += (s, e) => OnActivityMesg(e, fitDataCollector);
+            broadcaster.ActivityMesgEvent += (s, e) => OnActivityMesg(e, fitDataCollector);
             //broadcaster.DeviceInfoMesgEvent += (s, e) => OnDeviceInfoMesg(e, fitDataCollector);
             //broadcaster.EventMesgEvent += (s, e) => OnEventMesg(e, fitDataCollector);
             broadcaster.FileIdMesgEvent += (s, e) => OnFileIdMesg(e, fitDataCollector);
@@ -53,7 +53,7 @@ namespace Client.Services
             
             LapDataCollection lap = new()
             {
-                TimeUtc = msg?.GetTimestamp().GetDateTime(),
+                TimeEndUtc = msg?.GetTimestamp().GetDateTime(),
                 AvgCadence = msg?.GetAvgCadence() ?? msg?.GetAvgRunningCadence(),
                 AvgHeartRate = msg?.GetAvgHeartRate(),
                 AvgPower = msg?.GetAvgPower(),
@@ -129,7 +129,7 @@ namespace Client.Services
             uint? utcTimeRaw = msg?.GetTimestamp()?.GetTimeStamp();
 
             if (localTimeRaw != null && utcTimeRaw != null)
-                fitDataCollector.OffsetInSeconds = (long)localTimeRaw - (long)utcTimeRaw;
+                fitDataCollector.OffsetInSeconds = (int)((long)localTimeRaw - (long)utcTimeRaw);
             else
                 fitDataCollector.OffsetInSeconds = 0;
         }

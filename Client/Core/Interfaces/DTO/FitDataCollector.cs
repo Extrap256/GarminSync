@@ -8,7 +8,7 @@
             Classic,
             DoublePoling
         }
-        public long OffsetInSeconds {  get; set; }
+        public int OffsetInSeconds {  get; set; }
         public DeviceData DeviceData { get; set; } = new();
         public DateTime? TimeStartUtc { get; set; }
         public DateTime? TimeEndUtc { get; set; }

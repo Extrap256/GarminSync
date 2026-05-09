@@ -13,7 +13,7 @@ namespace Client.Storage
         public DbSet<WorkoutSkiing> WorkoutSkiings { get; set; } = null!;
         public DbSet<WorkoutSamples> WorkoutSamples { get; set; } = null!;
         public DbSet<WorkoutSamplesRunning> WorkoutSamplesRunnings { get; set; } = null!;
-        public DbSet<WorkoutSamplesCycling> WorkoutSamplesCiclings { get; set; } = null!;
+        public DbSet<WorkoutSamplesCycling> WorkoutSamplesCyclings { get; set; } = null!;
         public DbSet<WorkoutSamplesOther> WorkoutSamplesOthers { get; set; } = null!;
         public DbSet<Lap> Laps { get; set; } = null!;
         public DbSet<LapCycling> LapCyclings { get; set; } = null!;

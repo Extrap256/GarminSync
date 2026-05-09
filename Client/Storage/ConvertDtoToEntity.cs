@@ -54,7 +54,7 @@ namespace Client.Storage
             return workout;
         }
 
-        public static Lap LapDataCollectionToLap(LapDataCollection lapDataCollection, SportTypes type, long offsetInSeconds, DateTime startTimeWorkout)
+        public static Lap LapDataCollectionToLap(LapDataCollection lapDataCollection, SportTypes type, int offsetInSeconds, DateTime startTimeWorkout)
         {
             Lap lap = type switch
             {
@@ -67,12 +67,12 @@ namespace Client.Storage
             lap.AvrSpeedMetersPerHour = lapDataCollection.AvgSpeedMetersPerHour;
             lap.DistanceMeters = lapDataCollection.DistanceMeters;
             lap.ElevationGain = lapDataCollection.ElevationGain;
-            lap.TimeStart = (lapDataCollection.TimeUtc?.AddSeconds(offsetInSeconds)) ?? startTimeWorkout;
+            lap.TimeEndStart = (lapDataCollection.TimeEndUtc?.AddSeconds(offsetInSeconds)) ?? startTimeWorkout;
 
             return lap;
         }
 
-        public static WorkoutSamples RecordDataCollectionToWorkoutSamples(RecordDataCollection recordDataCollection, SportTypes type, long offsetInSeconds, DateTime startTimeWorkout)
+        public static WorkoutSamples RecordDataCollectionToWorkoutSamples(RecordDataCollection recordDataCollection, SportTypes type, int offsetInSeconds, DateTime startTimeWorkout)
         {
             WorkoutSamples workoutSamples = type switch
             {
@@ -88,7 +88,7 @@ namespace Client.Storage
             workoutSamples.SpeedMetersPerHour = recordDataCollection.SpeedMetersPerHour;
             workoutSamples.HeartRate = recordDataCollection.HeartRate;
 
-            workoutSamples.TimeSeconds = recordDataCollection.TimeUtc.HasValue && recordDataCollection.TimeUtc.Value >= startTimeWorkout
+            workoutSamples.TimeSeconds = recordDataCollection.TimeUtc.HasValue && recordDataCollection.TimeUtc.Value.AddSeconds(offsetInSeconds) >= startTimeWorkout
                 ? (uint?)(recordDataCollection.TimeUtc.Value.AddSeconds(offsetInSeconds) - startTimeWorkout).TotalSeconds
                 : 0;
 

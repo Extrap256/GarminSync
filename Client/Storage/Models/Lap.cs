@@ -10,7 +10,7 @@ namespace Client.Storage.Models
         public int LapId {  get; set; }
         public int WorkoutId {  get; set; }
         public Workout? Workout { get; set; }
-        public DateTime TimeStart {  get; set; }
+        public DateTime TimeEndStart {  get; set; }
         public uint? DistanceMeters {  get; set; }
         public uint? AvrSpeedMetersPerHour {  get; set; }
         public byte? AvrHeartRate {  get; set; }
