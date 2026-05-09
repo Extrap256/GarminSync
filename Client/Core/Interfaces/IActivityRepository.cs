@@ -14,7 +14,8 @@ namespace Client.Core.Interfaces
         /// Добавление сущности тренировки в БД контекст
         /// </summary>
         /// <param name="workout">Сущность тренировки</param>
-        Task AddAsync(Workout workout, CancellationToken ct = default);
+        /// <param name="SerialNumberDevice">Серийный номер устройства, к которому будет привязана тренировка</param>
+        Task AddAsync(Workout workout, uint SerialNumberDevice, CancellationToken ct = default);
 
         /// <summary>
         /// Сохранение изменений в БД

@@ -8,9 +8,10 @@
             Classic,
             DoublePoling
         }
+        public long OffsetInSeconds {  get; set; }
         public DeviceData DeviceData { get; set; } = new();
-        public DateTime? TimeStart { get; set; }
-        public DateTime? TimeEnd { get; set; }
+        public DateTime? TimeStartUtc { get; set; }
+        public DateTime? TimeEndUtc { get; set; }
         public uint? DistanceMeters { get; set; }
         public uint? AvgSpeedMetersPerHour { get; set; }
         public byte? AvgHeartRate { get; set; }
@@ -30,10 +31,10 @@
         {
             if (!DeviceData.SerialNumber.HasValue)
                 throw new NullReferenceException("Поле SerialNumber не содержит данных");
-            if (!TimeStart.HasValue)
+            if (!TimeStartUtc.HasValue)
                 throw new NullReferenceException("Поле TimeStart не содержит данных");
 
-            return $"{DeviceData.SerialNumber}_{TimeStart}";
+            return $"{DeviceData.SerialNumber}_{TimeStartUtc}";
         }
     }
 }

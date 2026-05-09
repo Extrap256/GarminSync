@@ -50,10 +50,10 @@ namespace Client.Services
         static private void OnLapMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
         {
             var msg = e.mesg as LapMesg;
-
+            
             LapDataCollection lap = new()
             {
-                Time = msg?.GetTimestamp().GetDateTime(),
+                TimeUtc = msg?.GetTimestamp().GetDateTime(),
                 AvgCadence = msg?.GetAvgCadence() ?? msg?.GetAvgRunningCadence(),
                 AvgHeartRate = msg?.GetAvgHeartRate(),
                 AvgPower = msg?.GetAvgPower(),
@@ -84,8 +84,8 @@ namespace Client.Services
             };
 
             fitDataCollector.DistanceMeters = (uint?)msg?.GetTotalDistance();
-            fitDataCollector.TimeStart = msg?.GetStartTime().GetDateTime();
-            fitDataCollector.TimeEnd = msg?.GetStartTime().GetDateTime().AddSeconds((double?)msg?.GetTotalElapsedTime() ?? 0);
+            fitDataCollector.TimeStartUtc = msg?.GetStartTime().GetDateTime();
+            fitDataCollector.TimeEndUtc = msg?.GetStartTime().GetDateTime().AddSeconds((double?)msg?.GetTotalElapsedTime() ?? 0);
             fitDataCollector.AvgSpeedMetersPerHour = (uint?)(msg?.GetAvgSpeed() * 3600);
             fitDataCollector.AvgHeartRate = msg?.GetAvgHeartRate();
             fitDataCollector.ElevationGain = msg?.GetTotalAscent();
@@ -100,7 +100,7 @@ namespace Client.Services
 
             RecordDataCollection record = new()
             {
-                Time = msg?.GetTimestamp().GetDateTime(),
+                TimeUtc = msg?.GetTimestamp().GetDateTime(),
                 DistanceMeters = (uint?)msg?.GetDistance(),
                 Altitude = (ushort?)msg?.GetAltitude(),
                 Cadence = msg?.GetCadence(),
@@ -123,7 +123,15 @@ namespace Client.Services
         }
         static public void OnActivityMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
         {
-            // Нечего
+            var msg = new ActivityMesg(e.mesg);
+
+            uint? localTimeRaw = msg?.GetLocalTimestamp();
+            uint? utcTimeRaw = msg?.GetTimestamp()?.GetTimeStamp();
+
+            if (localTimeRaw != null && utcTimeRaw != null)
+                fitDataCollector.OffsetInSeconds = (long)localTimeRaw - (long)utcTimeRaw;
+            else
+                fitDataCollector.OffsetInSeconds = 0;
         }
     }
 }

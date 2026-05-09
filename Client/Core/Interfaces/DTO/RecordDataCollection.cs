@@ -2,7 +2,7 @@
 {
     public class RecordDataCollection
     {
-        public DateTime? Time { get; set; }
+        public DateTime? TimeUtc { get; set; }
         public uint? DistanceMeters { get; set; }
         public uint? SpeedMetersPerHour { get; set; }
         public byte? HeartRate { get; set; }

@@ -27,8 +27,8 @@ namespace Client.Storage
             };
             
             workout.SerialNumberDevice = fitDataCollector.DeviceData.SerialNumber ?? 0;
-            workout.TimeStart = fitDataCollector.TimeStart ?? DateTime.Now;
-            workout.TimeEnd = fitDataCollector.TimeEnd ?? DateTime.Now;
+            workout.TimeStart = (fitDataCollector.TimeStartUtc?.AddSeconds(fitDataCollector.OffsetInSeconds)) ?? DateTime.Now;
+            workout.TimeEnd = (fitDataCollector.TimeEndUtc?.AddSeconds(fitDataCollector.OffsetInSeconds)) ?? DateTime.Now;
             workout.DistanceMeters = fitDataCollector.DistanceMeters;
             workout.AvgSpeedMetersPerHour = fitDataCollector.AvgSpeedMetersPerHour;
             workout.AvgHeartRate = fitDataCollector.AvgHeartRate;
@@ -38,13 +38,13 @@ namespace Client.Storage
 
             workout.WorkoutSamples = fitDataCollector.RecordDataCollections.Select(record =>
             {
-                var workOutSamples = RecordDataCollectionToWorkoutSamples(record, fitDataCollector.SportType ?? SportTypes.Other, workout.TimeStart);
+                var workOutSamples = RecordDataCollectionToWorkoutSamples(record, fitDataCollector.SportType ?? SportTypes.Other, fitDataCollector.OffsetInSeconds, workout.TimeStart);
                 workOutSamples.Workout = workout;
                 return workOutSamples;
             }).ToList();
             workout.Laps = fitDataCollector.LapDataCollections.Select(lap => 
             {
-                var lapResult = LapDataCollectionToLap(lap, fitDataCollector.SportType ?? SportTypes.Other, workout.TimeStart);
+                var lapResult = LapDataCollectionToLap(lap, fitDataCollector.SportType ?? SportTypes.Other, fitDataCollector.OffsetInSeconds, workout.TimeStart);
                 lapResult.Workout = workout;
                 return lapResult;
             }).ToList();
@@ -54,7 +54,7 @@ namespace Client.Storage
             return workout;
         }
 
-        public static Lap LapDataCollectionToLap(LapDataCollection lapDataCollection, SportTypes type, DateTime startTimeWorkout)
+        public static Lap LapDataCollectionToLap(LapDataCollection lapDataCollection, SportTypes type, long offsetInSeconds, DateTime startTimeWorkout)
         {
             Lap lap = type switch
             {
@@ -67,12 +67,12 @@ namespace Client.Storage
             lap.AvrSpeedMetersPerHour = lapDataCollection.AvgSpeedMetersPerHour;
             lap.DistanceMeters = lapDataCollection.DistanceMeters;
             lap.ElevationGain = lapDataCollection.ElevationGain;
-            lap.TimeStart = lapDataCollection.Time ?? startTimeWorkout;
+            lap.TimeStart = (lapDataCollection.TimeUtc?.AddSeconds(offsetInSeconds)) ?? startTimeWorkout;
 
             return lap;
         }
 
-        public static WorkoutSamples RecordDataCollectionToWorkoutSamples(RecordDataCollection recordDataCollection, SportTypes type, DateTime startTimeWorkout)
+        public static WorkoutSamples RecordDataCollectionToWorkoutSamples(RecordDataCollection recordDataCollection, SportTypes type, long offsetInSeconds, DateTime startTimeWorkout)
         {
             WorkoutSamples workoutSamples = type switch
             {
@@ -88,8 +88,8 @@ namespace Client.Storage
             workoutSamples.SpeedMetersPerHour = recordDataCollection.SpeedMetersPerHour;
             workoutSamples.HeartRate = recordDataCollection.HeartRate;
 
-            workoutSamples.TimeSeconds = recordDataCollection.Time.HasValue && recordDataCollection.Time.Value >= startTimeWorkout
-                ? (uint?)(recordDataCollection.Time.Value - startTimeWorkout).TotalSeconds
+            workoutSamples.TimeSeconds = recordDataCollection.TimeUtc.HasValue && recordDataCollection.TimeUtc.Value >= startTimeWorkout
+                ? (uint?)(recordDataCollection.TimeUtc.Value.AddSeconds(offsetInSeconds) - startTimeWorkout).TotalSeconds
                 : 0;
 
             return workoutSamples;
