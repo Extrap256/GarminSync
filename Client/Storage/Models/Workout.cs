@@ -11,8 +11,8 @@ namespace Client.Storage.Models
         [Key]
         public int WorkoutId {  get; set; }
         //public int DeviceId {  get; set; }
+        //public Device? Device { get; set; }
         public uint SerialNumberDevice {  get; set; }
-        public Device? Device { get; set; }
         public string Identifier { get => _identifier; }  // DeviceId_TimeStart
         public DateTime TimeStart {  get; set; }
         public DateTime TimeEnd { get; set; }

@@ -52,7 +52,7 @@ namespace Client.Services
                 {
                     _ui.ShowProgress(fileName, i + 1, fitsFilesPaths.Length);
 
-                    FitDataCollector dto = await _fitParser.ParseAsync(filePath, ct);
+                    FitDataCollector dto = await _fitParser.ParseActivityAsync(filePath, ct);
 
                     string identifier = dto.GetIdentifier();
 

@@ -7,7 +7,7 @@ namespace Client.Services
 {
     public class FitParser : IFitParser
     {
-        public Task<FitDataCollector> ParseAsync(string filePath, CancellationToken token = default)
+        public Task<FitDataCollector> ParseActivityAsync(string filePath, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
 
@@ -44,8 +44,37 @@ namespace Client.Services
                 throw new InvalidDataException($"Ошибка парсинга FIT-файла: {filePath}", ex);
             }
         }
+        public Task<DeviceData> ParseDeviceAsync(string filePath, CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
 
+            var fileInfo = new FileInfo(filePath);
 
+            if (!fileInfo.Exists)
+                throw new FileNotFoundException(filePath);
+
+            Decode decoder = new();
+            MesgBroadcaster broadcaster = new();
+            DeviceData deviceData = new();
+
+            decoder.MesgEvent += broadcaster.OnMesg;
+            decoder.MesgDefinitionEvent += broadcaster.OnMesgDefinition;
+
+            broadcaster.DeviceInfoMesgEvent += (s, e) => OnFileIdMesg(e, deviceData);
+
+            try
+            {
+                using var stream = new FileStream(filePath, FileMode.Open);
+
+                decoder.Read(stream);
+
+                return Task.FromResult(deviceData);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidDataException($"Ошибка парсинга FIT-файла: {filePath}", ex);
+            }
+        }
 
         static private void OnLapMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
         {
@@ -70,6 +99,13 @@ namespace Client.Services
 
             fitDataCollector.DeviceData.SerialNumber = msg?.GetSerialNumber();
             fitDataCollector.DeviceData.Product = msg?.GetProduct();
+        }
+        static public void OnFileIdMesg(MesgEventArgs e, DeviceData deviceData)
+        {
+            var msg = e.mesg as FileIdMesg;
+
+            deviceData.SerialNumber = msg?.GetSerialNumber();
+            deviceData.Product = msg?.GetProduct();
         }
         static public void OnSessionMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
         {
