@@ -3,9 +3,10 @@ using Client.Core.Interfaces.DTO;
 
 namespace Client.Services
 {
-    public class DeviceScanner(string activitiesPath = "GARMIN\\ACTIVITY") : IDeviceScanner
+    public class DeviceScanner(string activitiesPath = "GARMIN\\ACTIVITY", string deviceInfoPath = "GARMIN\\Device.fit") : IDeviceScanner
     {
         private string _activityPath = activitiesPath;
+        private string _deviceInfoPath = deviceInfoPath;
 
         public Task<IReadOnlyList<DeviceInfo>> ScanAsync(CancellationToken token)
         {
@@ -23,13 +24,15 @@ namespace Client.Services
                 if (drive.IsReady)
                 {
                     var fullPath = Path.Combine(drive.Name, _activityPath);
+                    var deviceInfoPath = Path.Combine(drive.Name, _deviceInfoPath);
 
                     if (Directory.Exists(fullPath))
                     {
                         devices.Add(new(
                             Label: string.IsNullOrEmpty(drive.VolumeLabel) ? "Без названия" : drive.VolumeLabel,
                             DrivePath: drive.Name,
-                            ActivitiesPath: fullPath));
+                            ActivitiesPath: fullPath,
+                            DeviceInfoPath: deviceInfoPath));
                     }
                 }
             }

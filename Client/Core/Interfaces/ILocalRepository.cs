@@ -1,8 +1,8 @@
-﻿using Client.Storage.Models;
+﻿using EntityClassLibrary.Models;
 
 namespace Client.Core.Interfaces
 {
-    public interface IActivityRepository
+    public interface ILocalRepository
     {
         /// <summary>
         /// Проверка на существование тренировки
@@ -15,11 +15,17 @@ namespace Client.Core.Interfaces
         /// </summary>
         /// <param name="workout">Сущность тренировки</param>
         /// <param name="SerialNumberDevice">Серийный номер устройства, к которому будет привязана тренировка</param>
-        Task AddAsync(Workout workout, CancellationToken ct = default);
+        Task AddAsync(Workout workout, uint SerialNumberDevice, CancellationToken ct = default);
 
         /// <summary>
         /// Сохранение изменений в БД
         /// </summary>
         Task SaveChangeAsync(CancellationToken ct = default);
+        /// <summary>
+        /// Возвращает устройство или null при отсутствии
+        /// </summary>
+        /// <param name="serialNumber">Серийный номер устройства</param>
+        /// <returns></returns>
+        Task<Device> GetOrCreateDeviceAsync(uint serialNumber);
     }
 }

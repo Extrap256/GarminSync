@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Client.Storage.Models;
+using EntityClassLibrary.Models;
 
 namespace Client.Storage
 {
     public class LocalDataBaseContext : DbContext
     {
         //public DbSet<User> Users { get; set; } = null!;
-        //public DbSet<Device> Devices { get; set; } = null!;
+        public DbSet<Device> Devices { get; set; } = null!;
         public DbSet<Workout> Workouts { get; set; } = null!;
         public DbSet<WorkoutRunning> WorkoutRunnings { get; set; } = null!;
         public DbSet<WorkoutCycling> WorkoutCyclings { get; set; } = null!;

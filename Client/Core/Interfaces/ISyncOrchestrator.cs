@@ -7,6 +7,6 @@ namespace Client.Core.Interfaces
         /// <summary>
         /// Выполнение парсинга и сохранение в БД всех файлов тренировок
         /// </summary>
-        Task<SyncResult> RunAsync(string activitiesFolderPath, CancellationToken ct = default);
+        Task<SyncResult> RunAsync(DeviceInfo deviceInfo, CancellationToken ct = default);
     }
 }

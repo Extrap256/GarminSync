@@ -1,5 +1,4 @@
-﻿
-namespace Client.Storage.Models
+﻿namespace EntityClassLibrary.Models
 {
     public class WorkoutSamplesRunning : WorkoutSamples
     {

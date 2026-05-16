@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
-namespace Client.Storage.Models
+namespace EntityClassLibrary.Models
 {
     [Index("Identifier", IsUnique = true)]
     [Index("TimeStart", IsDescending = [true])]
@@ -10,8 +10,8 @@ namespace Client.Storage.Models
         private string _identifier;
         [Key]
         public int WorkoutId {  get; set; }
-        //public int DeviceId {  get; set; }
-        //public Device? Device { get; set; }
+        public int DeviceId {  get; set; }
+        public Device? Device { get; set; }
         public uint SerialNumberDevice {  get; set; }
         public string Identifier { get => _identifier; }  // DeviceId_TimeStart
         public DateTime TimeStart {  get; set; }

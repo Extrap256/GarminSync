@@ -1,7 +1,7 @@
 ﻿using Client.Core.Interfaces.DTO;
-using Client.Storage.Models;
+using EntityClassLibrary.Models;
 using static Client.Core.Interfaces.DTO.FitDataCollector;
-using static Client.Storage.Models.WorkoutSkiing;
+using static EntityClassLibrary.Models.WorkoutSkiing;
 
 namespace Client.Storage
 {
@@ -26,7 +26,7 @@ namespace Client.Storage
                 _ => new WorkoutOther()
             };
             
-            workout.SerialNumberDevice = fitDataCollector.DeviceData.SerialNumber ?? 0;
+            workout.SerialNumberDevice = fitDataCollector.DeviceData.SerialNumber;
             workout.TimeStart = (fitDataCollector.TimeStartUtc?.AddSeconds(fitDataCollector.OffsetInSeconds)) ?? DateTime.Now;
             workout.TimeEnd = (fitDataCollector.TimeEndUtc?.AddSeconds(fitDataCollector.OffsetInSeconds)) ?? DateTime.Now;
             workout.DistanceMeters = fitDataCollector.DistanceMeters;

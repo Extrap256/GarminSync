@@ -29,8 +29,6 @@
 
         public string GetIdentifier()
         {
-            if (!DeviceData.SerialNumber.HasValue)
-                throw new NullReferenceException("Поле SerialNumber не содержит данных");
             if (!TimeStartUtc.HasValue)
                 throw new NullReferenceException("Поле TimeStart не содержит данных");
 

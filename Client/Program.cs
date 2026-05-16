@@ -1,13 +1,11 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Client.Core.Interfaces;
 using Client.Services;
 using Client.Storage;
 using Client.UI;
+using Client.Core.Interfaces.DTO;
 
 namespace Client
 {
@@ -74,10 +72,13 @@ namespace Client
             var actPath = config.GetSection("Device:ActivitiesRelativePath").Value
                           ?? @"GARMIN\ACTIVITIES";
 
+            var devPath = config.GetSection("Device:DeviceInfoRelavivePath").Value
+                          ?? @"GARMIN\Device.fit";
+
             // Сервисы
-            services.AddTransient<IDeviceScanner>(_ => new DeviceScanner(actPath));
-            services.AddTransient<IFitParser, FitParser>();
-            services.AddScoped<IActivityRepository, ActivityRepository>();
+            services.AddTransient<IDeviceScanner>(_ => new DeviceScanner(actPath, devPath));
+            services.AddScoped<IFitParser, FitParser>();
+            services.AddScoped<ILocalRepository, LocalRepository>();
             services.AddScoped<ISyncOrchestrator, Orchestrator>();
 
             // UI
@@ -104,13 +105,15 @@ namespace Client
             ct.ThrowIfCancellationRequested();
 
             var selected = await ui.SelectDeviceAsync(devices, ct);
-            if (selected is null) return;
+            if (selected is null)
+                return;
             ct.ThrowIfCancellationRequested();
 
             ui.ShowMessage($"\nЗапуск синхронизации: {selected.Label}");
             ui.ShowMessage($"Путь: {selected.ActivitiesPath}\n");
 
-            var result = await orchestrator.RunAsync(selected.ActivitiesPath, ct);
+            
+            var result = await orchestrator.RunAsync(selected, ct);
 
             // Вывод итогов
             ui.ShowMessage("\n=================================");

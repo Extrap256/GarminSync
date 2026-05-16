@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="Client/Client.csproj" />
+  <Project Path="EntityClassLibrary/EntityClassLibrary.csproj" Id="2156ad19-f999-4c3c-8861-e67052f6b627" />
+  <Project Path="Server/Server.csproj" Id="02941809-f9fd-4a18-a283-bcfe90aa6e8c" />
 </Solution>

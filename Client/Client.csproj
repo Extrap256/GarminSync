@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\EntityClassLibrary\EntityClassLibrary.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="AppSettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

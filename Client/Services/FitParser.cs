@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Client.Core.Interfaces;
+﻿using Client.Core.Interfaces;
 using Client.Core.Interfaces.DTO;
 using Dynastream.Fit;
 
@@ -97,14 +96,14 @@ namespace Client.Services
         {
             var msg = e.mesg as FileIdMesg;
 
-            fitDataCollector.DeviceData.SerialNumber = msg?.GetSerialNumber();
+            fitDataCollector.DeviceData.SerialNumber = msg?.GetSerialNumber() ?? throw new Exception("Отсутствует SerialNumber");
             fitDataCollector.DeviceData.Product = msg?.GetProduct();
         }
         static public void OnFileIdMesg(MesgEventArgs e, DeviceData deviceData)
         {
             var msg = e.mesg as FileIdMesg;
 
-            deviceData.SerialNumber = msg?.GetSerialNumber();
+            deviceData.SerialNumber = msg?.GetSerialNumber() ?? throw new Exception("Отсутствует SerialNumber");
             deviceData.Product = msg?.GetProduct();
         }
         static public void OnSessionMesg(MesgEventArgs e, FitDataCollector fitDataCollector)

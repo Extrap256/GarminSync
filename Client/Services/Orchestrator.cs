@@ -1,25 +1,27 @@
 ﻿using Client.Core.Interfaces;
 using Client.Core.Interfaces.DTO;
 using Client.Storage;
-using Client.Storage.Models;
+using EntityClassLibrary.Models;
 
 namespace Client.Services
 {
     public class Orchestrator : ISyncOrchestrator
     {
         private readonly IFitParser _fitParser;
-        private readonly IActivityRepository _activityRepository;
+        private readonly ILocalRepository _localRepository;
         private readonly IAppUI _ui;
 
-        public Orchestrator(IFitParser fitParser, IActivityRepository activityRepository, IAppUI appUI)
+        public Orchestrator(IFitParser fitParser, ILocalRepository activityRepository, IAppUI appUI)
         {
             _fitParser = fitParser;
-            _activityRepository = activityRepository;
+            _localRepository = activityRepository;
             _ui = appUI;
         }
 
-        public async Task<SyncResult> RunAsync(string activitiesFolderPath, CancellationToken ct = default)
+        public async Task<SyncResult> RunAsync(DeviceInfo deviceInfo, CancellationToken ct = default)
         {
+            string activitiesFolderPath = deviceInfo.ActivitiesPath;
+
             if (!Directory.Exists(activitiesFolderPath))
                 throw new DirectoryNotFoundException(activitiesFolderPath);
 
@@ -30,6 +32,7 @@ namespace Client.Services
                 _ui.ShowMessage("Файлы не найдены");
                 return new SyncResult(0, 0, []);
             }
+            DeviceData deviceData = await _fitParser.ParseDeviceAsync(deviceInfo.DeviceInfoPath, ct);
 
             _ui.ShowMessage($"Найдено файлов: {fitsFilesPaths.Length}");
 
@@ -56,15 +59,16 @@ namespace Client.Services
 
                     string identifier = dto.GetIdentifier();
 
-                    if (await _activityRepository.ExistByIdentifierAsync(identifier ,ct))
+                    if (await _localRepository.ExistByIdentifierAsync(identifier ,ct))
                     {
                         skipped++;
                         continue;
                     }
 
                     Workout workout = ConvertDtoToEntity.FitDataCollectorToWorkout(dto);
+                    workout.Device = await _localRepository.GetOrCreateDeviceAsync(dto.DeviceData.SerialNumber);
 
-                    await _activityRepository.AddAsync(workout, ct);
+                    await _localRepository.AddAsync(workout, deviceData.SerialNumber, ct);
                     processed++;
                 }
                 catch (OperationCanceledException)
@@ -82,7 +86,7 @@ namespace Client.Services
             {
                 try
                 {
-                    await _activityRepository.SaveChangeAsync(ct);
+                    await _localRepository.SaveChangeAsync(ct);
                     _ui.ShowMessage($"В локальную базу сохранено тренировок: {processed}");
                 }
                 catch (Exception ex)
