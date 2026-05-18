@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="API\Endpoints\" />
+    <Folder Include="API\Models\Auth\" />
+    <Folder Include="API\Models\Workout\" />
+    <Folder Include="API\Models\Common\" />
+    <Folder Include="API\Extensions\" />
+    <Folder Include="Common\Helpers\" />
+    <Folder Include="Core\Interfaces\" />
+    <Folder Include="Core\Services\" />
+    <Folder Include="Core\Exceptions\" />
+    <Folder Include="Infrastructure\Data\" />
+    <Folder Include="Infrastructure\Seed\" />
+  </ItemGroup>
+
+</Project>
