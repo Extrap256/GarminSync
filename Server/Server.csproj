@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <Folder Include="API\Models\Auth\" />
-    <Folder Include="API\Models\Workout\" />
     <Folder Include="API\Models\Common\" />
     <Folder Include="API\Extensions\" />
     <Folder Include="Common\Helpers\" />

@@ -7,7 +7,7 @@ namespace EntityClassLibrary.Models
     [Index("TimeStart", IsDescending = [true])]
     public abstract class Workout
     {
-        private string _identifier;
+        private string _identifier = null!;
         [Key]
         public int WorkoutId {  get; set; }
         public int DeviceId {  get; set; }
@@ -27,9 +27,6 @@ namespace EntityClassLibrary.Models
 
         public void SetIdentifier()
         {
-            if (SerialNumberDevice == 0)
-                throw new InvalidOperationException("DeviceId must be set");
-
             if (TimeStart == default)
                 throw new InvalidOperationException("TimeStart must be set");
 

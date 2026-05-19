@@ -50,7 +50,7 @@ namespace Server.Core.Services
             if (!PasswordHelper.VerifyPassword(request.Password, user.Hash))
                 throw new UnauthorizedException("Неверный логин или пароль");
 
-            _logger.LogInformation("Пользователь {Login}", request.Login);
+            _logger.LogInformation("Пользователь {Login} вошел", request.Login);
             return await GenerateAuthResponse(user);
         }
         public Task<bool> ValidateTokenAsync(string token, CancellationToken ct = default)

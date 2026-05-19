@@ -10,12 +10,12 @@
         //    return app;
         //}
 
-        public static IEndpointRouteBuilder MapWorkoutEndpoints(this IEndpointRouteBuilder app)
-        {
-            var group = app.MapGroup("/api/workouts");
-            // group.MapPost("/sync", WorkoutEndpoints.Sync);
-            return app;
-        }
+        //public static IEndpointRouteBuilder MapWorkoutEndpoints(this IEndpointRouteBuilder app)
+        //{
+        //    var group = app.MapGroup("/api/workouts");
+        //    // group.MapPost("/sync", WorkoutEndpoints.Sync);
+        //    return app;
+        //}
 
         public static IEndpointRouteBuilder MapUserEndpoints(this IEndpointRouteBuilder app) => app;
         public static IEndpointRouteBuilder MapGroupEndpoints(this IEndpointRouteBuilder app) => app;

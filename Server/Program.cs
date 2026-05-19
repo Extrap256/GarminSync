@@ -40,6 +40,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite
 
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddTransient<IWorkoutSyncService, WorkoutSyncService>();
 //Добавить потом сервисы сюда
 
 
@@ -68,12 +69,17 @@ app.Use(async (context, next) =>
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsJsonAsync(new { error = ex.Message });
     }
+    catch (DuplicateWorkoutException ex)
+    {
+        context.Response.StatusCode = StatusCodes.Status409Conflict;
+        await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+    }
     catch (Exception ex)
     {
         // Потом: logger.LogError(ex, "Unhandled exception");
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new { error = "Внутренняя ошибка сервера" });
+        await context.Response.WriteAsJsonAsync(new { error = "Внутренняя ошибка сервера: " + ex.Message });
     }
 });
 

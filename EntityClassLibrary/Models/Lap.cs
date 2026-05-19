@@ -10,10 +10,10 @@ namespace EntityClassLibrary.Models
         public int LapId {  get; set; }
         public int WorkoutId {  get; set; }
         public Workout? Workout { get; set; }
-        public DateTime TimeEndStart {  get; set; }
+        public DateTime TimeEnd {  get; set; }
         public uint? DistanceMeters {  get; set; }
-        public uint? AvrSpeedMetersPerHour {  get; set; }
-        public byte? AvrHeartRate {  get; set; }
+        public uint? AvgSpeedMetersPerHour {  get; set; }
+        public byte? AvgHeartRate {  get; set; }
         public int? ElevationGain {  get; set; }
     }
 }

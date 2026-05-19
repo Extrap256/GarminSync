@@ -63,11 +63,11 @@ namespace Client.Storage
                 _ => new LapOther()
             };
 
-            lap.AvrHeartRate = lapDataCollection.AvgHeartRate;
-            lap.AvrSpeedMetersPerHour = lapDataCollection.AvgSpeedMetersPerHour;
+            lap.AvgHeartRate = lapDataCollection.AvgHeartRate;
+            lap.AvgSpeedMetersPerHour = lapDataCollection.AvgSpeedMetersPerHour;
             lap.DistanceMeters = lapDataCollection.DistanceMeters;
             lap.ElevationGain = lapDataCollection.ElevationGain;
-            lap.TimeEndStart = (lapDataCollection.TimeEndUtc?.AddSeconds(offsetInSeconds)) ?? startTimeWorkout;
+            lap.TimeEnd = (lapDataCollection.TimeEndUtc?.AddSeconds(offsetInSeconds)) ?? startTimeWorkout;
 
             return lap;
         }
