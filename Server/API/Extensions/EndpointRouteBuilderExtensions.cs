@@ -17,8 +17,8 @@
         //    return app;
         //}
 
-        public static IEndpointRouteBuilder MapUserEndpoints(this IEndpointRouteBuilder app) => app;
-        public static IEndpointRouteBuilder MapGroupEndpoints(this IEndpointRouteBuilder app) => app;
+        //public static IEndpointRouteBuilder MapUserEndpoints(this IEndpointRouteBuilder app) => app;
+        //public static IEndpointRouteBuilder MapGroupEndpoints(this IEndpointRouteBuilder app) => app;
         public static IEndpointRouteBuilder MapBotEndpoints(this IEndpointRouteBuilder app) => app;
     }
 }

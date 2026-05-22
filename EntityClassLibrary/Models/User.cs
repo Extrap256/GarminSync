@@ -18,6 +18,10 @@ namespace EntityClassLibrary.Models
         [Required]
         public string LastName {  get; set; } = null!;
         public ushort? YearOfBirth {  get; set; }
-        public List<Device> Devices { get; set; } = [];
+        public List<Device> Devices { get; set; } = new();
+        public List<Group> Groups { get; set; } = new();
+
+        public List<Group> TrainedGroups {  get; set; } = new();
+        public List<Group> CreatedGroups { get; set; } = new();
     }
 }

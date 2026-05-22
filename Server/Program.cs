@@ -41,6 +41,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddTransient<IWorkoutSyncService, WorkoutSyncService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IGroupService, GroupService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 //Добавить потом сервисы сюда
 
 
@@ -87,6 +90,6 @@ app.MapAuthEndpoints();
 app.MapWorkoutEndpoints();
 app.MapUserEndpoints();
 app.MapGroupEndpoints();
-app.MapBotEndpoints();
+app.MapReportEndpoints();
 
 app.Run();
