@@ -8,7 +8,7 @@ namespace Server.API.Models.Auth
         public DateTime ExpiresAt { get; set; }
         public UserDto User { get; set; } = null!;
 
-        public static AuthResponse Success(string token, EntityClassLibrary.Models.User user)
+        public static AuthResponse Success(string token, EntityClassLibraryServer.Models.User user)
         {
             return new()
             {

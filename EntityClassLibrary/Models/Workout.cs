@@ -1,7 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using EntityClassLibraryServer.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace EntityClassLibrary.Models
+namespace EntityClassLibraryServer.Models
 {
     [Index("Identifier", IsUnique = true)]
     [Index("TimeStart", IsDescending = [true])]

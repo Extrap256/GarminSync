@@ -1,7 +1,7 @@
 ﻿using Client.Core.Interfaces.DTO;
-using EntityClassLibrary.Models;
+using EntityClassLibraryClient.Models;
 using static Client.Core.Interfaces.DTO.FitDataCollector;
-using static EntityClassLibrary.Models.WorkoutSkiing;
+using static EntityClassLibraryClient.Models.WorkoutSkiing;
 
 namespace Client.Storage
 {

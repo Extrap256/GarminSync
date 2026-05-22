@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Server.API.Endpoints;
-using Server.API.Extensions;
 using Server.Common.Exceptions;
 using Server.Core.Interfaces;
 using Server.Core.Services;

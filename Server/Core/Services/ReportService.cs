@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using EntityClassLibrary.Models;
+using EntityClassLibraryServer.Models;
 using Microsoft.EntityFrameworkCore;
 using Server.Common.Exceptions;
 using Server.Core.Interfaces;

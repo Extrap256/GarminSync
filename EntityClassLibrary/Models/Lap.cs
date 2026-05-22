@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
-namespace EntityClassLibrary.Models
+namespace EntityClassLibraryServer.Models
 {
     [Index("WorkoutId")]
     public abstract class Lap

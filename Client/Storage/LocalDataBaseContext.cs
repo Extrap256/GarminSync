@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using EntityClassLibrary.Models;
+using EntityClassLibraryClient.Models;
 
 namespace Client.Storage
 {

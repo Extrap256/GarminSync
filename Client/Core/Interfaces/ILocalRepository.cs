@@ -1,4 +1,4 @@
-﻿using EntityClassLibrary.Models;
+﻿using EntityClassLibraryClient.Models;
 
 namespace Client.Core.Interfaces
 {

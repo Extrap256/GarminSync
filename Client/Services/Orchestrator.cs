@@ -1,7 +1,7 @@
 ﻿using Client.Core.Interfaces;
 using Client.Core.Interfaces.DTO;
 using Client.Storage;
-using EntityClassLibrary.Models;
+using EntityClassLibraryClient.Models;
 
 namespace Client.Services
 {

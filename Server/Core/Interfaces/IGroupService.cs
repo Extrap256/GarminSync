@@ -1,4 +1,4 @@
-﻿using EntityClassLibrary.Models;
+﻿using EntityClassLibraryServer.Models;
 using Server.API.Models.Group;
 
 namespace Server.Core.Interfaces

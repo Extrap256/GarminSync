@@ -1,4 +1,4 @@
-﻿using EntityClassLibrary.Models;
+﻿using EntityClassLibraryServer.Models;
 using Microsoft.EntityFrameworkCore;
 using Server.API.Models.Workout;
 using Server.Common.Exceptions;

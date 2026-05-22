@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Server.API.Models.Auth;
 using Server.Core.Interfaces;
-using Server.Core.Services;
 
 namespace Server.API.Endpoints
 {

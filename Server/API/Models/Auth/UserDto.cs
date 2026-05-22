@@ -7,7 +7,7 @@
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public ushort? YearOfBirth {  get; set; }
-        public static UserDto FromEntity(EntityClassLibrary.Models.User user)
+        public static UserDto FromEntity(EntityClassLibraryServer.Models.User user)
         {
             return new()
             {

@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EntityClassLibrary\EntityClassLibrary.csproj" />
+    <ProjectReference Include="..\EntityClassLibrary\EntityClassLibraryServer.csproj" />
   </ItemGroup>
 
 </Project>

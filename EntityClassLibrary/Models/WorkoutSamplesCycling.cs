@@ -1,4 +1,4 @@
-﻿namespace EntityClassLibrary.Models
+﻿namespace EntityClassLibraryServer.Models
 {
     public class WorkoutSamplesCycling : WorkoutSamples
     {
