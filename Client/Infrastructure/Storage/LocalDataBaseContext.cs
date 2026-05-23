@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using EntityClassLibraryClient.Models;
 
-namespace Client.Storage
+namespace Client.Infrastructure.Storage
 {
     public class LocalDataBaseContext : DbContext
     {

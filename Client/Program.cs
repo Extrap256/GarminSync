@@ -3,9 +3,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Client.Core.Interfaces;
 using Client.Services;
-using Client.Storage;
 using Client.UI;
 using Client.Core.Interfaces.DTO;
+using Client.Infrastructure.Storage;
+using Client.Infrastructure.API;
+using Client.Infrastructure.Security.Interfaces;
+using Client.Infrastructure.Security;
+using Client.Core.Interfaces.Enums;
 
 namespace Client
 {
@@ -13,13 +17,13 @@ namespace Client
     {
         static async Task Main(string[] args)
         {
-            // 1. Загрузка конфигурации
+            // Загрузка конфигурации
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            // 2. Настройка DI-контейнера
+            // Настройка DI-контейнера
             var services = new ServiceCollection();
             ConfigureServices(services, configuration);
             using var serviceProvider = services.BuildServiceProvider();
@@ -32,7 +36,7 @@ namespace Client
                 cts.Cancel();
             };
 
-            // 4. Запуск основного сценария
+            // Запуск основного сценария
             try
             {
                 await RunWorkflowAsync(serviceProvider, cts.Token);
@@ -68,15 +72,35 @@ namespace Client
             services.AddDbContext<LocalDataBaseContext>(options =>
                 options.UseSqlite(connStr));
 
+            var apiSection = config.GetSection(ApiSettings.SectionName);
+            if (!apiSection.Exists() || string.IsNullOrEmpty(apiSection["BaseUrl"]))
+                throw new InvalidOperationException($"Ошибка конфигурации: секция \"{ApiSettings.SectionName}\" отсутствует");
+
+            services.Configure<ApiSettings>(apiSection);
+
+            string baseUrl = apiSection["BaseUrl"]!;
+
             // Путь к папке активностей
             var actPath = config.GetSection("Device:ActivitiesRelativePath").Value
                           ?? @"GARMIN\ACTIVITIES";
 
-            var devPath = config.GetSection("Device:DeviceInfoRelavivePath").Value
+            var devPath = config.GetSection("Device:DeviceInfoRelativePath").Value
                           ?? @"GARMIN\Device.fit";
 
             // Сервисы
-            services.AddTransient<IDeviceScanner>(_ => new DeviceScanner(actPath, devPath));
+            services.AddHttpClient("GarminApi", client =>
+            {
+                client.BaseAddress = new Uri(baseUrl);
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+            }).AddHttpMessageHandler<AuthHeaderHandler>();
+
+            services.AddTransient<AuthHeaderHandler>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddSingleton<ITokenStorage, TokenStorage>(_ => new TokenStorage(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)));
+
+
+            services.AddSingleton<IDeviceScanner>(_ => new DeviceScanner(actPath, devPath));
             services.AddScoped<IFitParser, FitParser>();
             services.AddScoped<ILocalRepository, LocalRepository>();
             services.AddScoped<ISyncOrchestrator, Orchestrator>();
@@ -95,10 +119,186 @@ namespace Client
             var sp = scope.ServiceProvider;
 
             var ui = sp.GetRequiredService<IAppUI>();
+            var authService = sp.GetRequiredService<IAuthService>();
+            var userService = sp.GetRequiredService<IUserService>();
             var scanner = sp.GetRequiredService<IDeviceScanner>();
             var orchestrator = sp.GetRequiredService<ISyncOrchestrator>();
 
             ui.ShowHeader();
+
+            // Выбор работы при входе
+            var auth = await Authorization(authService, ui, ct);
+            if (auth == AuthAction.Exit)
+                return;
+
+            while (!ct.IsCancellationRequested)
+            {
+                bool continueRunning = authService.IsAuthenticated()
+                    ? await ShowMainMenuAsync(ui, authService, userService, scanner, orchestrator, ct)
+                    : await ShowLimitedMenuAsync(ui, authService, scanner, orchestrator, ct);
+
+                if (!continueRunning)
+                    break;
+            }
+        }
+
+        private static async Task<AuthAction> Authorization(
+            IAuthService authService, 
+            IAppUI ui, 
+            CancellationToken ct = default)
+        {
+            if (authService.IsAuthenticated())
+            {
+                ui.ShowMessage("Вы уже авторизированы");
+                return AuthAction.Skip;
+            }
+
+            var authAction = await ui.ShowAuthMenuAsync(ct);
+
+            switch (authAction)
+            {
+                case AuthAction.Login:
+                    try
+                    {
+                        var loginRequest = await ui.PromptLoginAsync(ct);
+                        var loginResponse = await authService.LoginAsync(loginRequest, ct);
+                        ui.ShowMessage($"Вход выполнен: {loginResponse.User.FirstName}");
+                    }
+                    catch (Exception ex)
+                    {
+                        ui.ShowError($"Ошибка входа: {ex.Message}");
+                        ui.WaitForContinue();
+                        return AuthAction.Skip;
+                    }
+                    break;
+
+                case AuthAction.Register:
+
+                    try
+                    {
+                        var reqRequest = await ui.PromptRegisterAsync(ct);
+                        var regResponse = await authService.RegisterAsync(reqRequest, ct);
+                        ui.ShowMessage($"Регистрация успешна: {regResponse.User.FirstName}");
+                    }
+                    catch (Exception ex)
+                    {
+                        ui.ShowError($"Ошибка регистрации: {ex.Message}");
+                        ui.WaitForContinue();
+                        return AuthAction.Skip;
+                    }
+                    break;
+
+                case AuthAction.Skip:
+                    ui.ShowMessage($"Работа в локальном режиме");
+                    break;
+
+                case AuthAction.Exit:
+                    return AuthAction.Exit;
+            }
+
+            return authAction;
+        }
+        private static async Task<bool> ShowLimitedMenuAsync(
+            IAppUI ui,
+            IAuthService authService,
+            IDeviceScanner scanner,
+            ISyncOrchestrator orchestrator,
+            CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                Console.Clear();
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Ограниченное почти главное меню");
+                Console.ResetColor();
+                Console.WriteLine();
+
+                Console.WriteLine("1. Синхронизация с часов");
+                Console.WriteLine("2. Авторизация");
+                Console.WriteLine("0. Выход из программы");
+                Console.Write("\nВыбор: ");
+
+                var input = Console.ReadLine()?.Trim();
+
+                switch (input)
+                {
+                    case "1":
+                        await SyncFromDeviceAsync(ui, scanner, orchestrator, ct);
+                        break;
+
+                    case "2":
+                        var result = await Authorization(authService, ui, ct);
+                        if (result == AuthAction.Exit)
+                            return false;
+                        return true;
+
+                    case "0":
+                        return false;
+                }
+            }
+
+            return false;
+        }
+        private static async Task<bool> ShowMainMenuAsync(
+            IAppUI ui,
+            IAuthService authService,
+            IUserService userService,
+            IDeviceScanner scanner,
+            ISyncOrchestrator orchestrator,
+            CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                Console.Clear();
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Главное меню");
+                Console.ResetColor();
+                Console.WriteLine();
+
+                Console.WriteLine("1. Синхронизация с часов");
+                Console.WriteLine("2. Мой профиль");
+                Console.WriteLine("3. Отправить данные на сервер");
+                Console.WriteLine("4. Выйти из аккаунта");
+
+                Console.WriteLine("0. Выход из программы");
+                Console.Write("\nВыбор: ");
+
+                var input = Console.ReadLine()?.Trim();
+
+                switch (input)
+                {
+                    case "1":
+                        await SyncFromDeviceAsync(ui, scanner, orchestrator, ct);
+                        break;
+
+                    case "2":
+                        await ui.ProfileMenuAsync(userService, ct);
+                        break;
+
+                    case "3" when authService.IsAuthenticated():
+                        ui.ShowMessage("Отправка на сервер...");
+                        // Добавить отправку на сервер
+                        break;
+
+                    case "4" when authService.IsAuthenticated():
+                        await authService.LogoutAsync(ct);
+                        ui.ShowMessage("Выход выполнен");
+                        ui.WaitForContinue();
+                        return true;
+
+                    case "0":
+                        return false;
+                }
+            }
+            return false;
+        }
+
+        private static async Task SyncFromDeviceAsync(
+            IAppUI ui,
+            IDeviceScanner scanner,
+            ISyncOrchestrator orchestrator,
+            CancellationToken ct)
+        {
             ui.ShowMessage("Сканирование подключенных устройств...");
 
             var devices = await scanner.ScanAsync(ct);
@@ -112,7 +312,7 @@ namespace Client
             ui.ShowMessage($"\nЗапуск синхронизации: {selected.Label}");
             ui.ShowMessage($"Путь: {selected.ActivitiesPath}\n");
 
-            
+
             var result = await orchestrator.RunAsync(selected, ct);
 
             // Вывод итогов
@@ -130,6 +330,8 @@ namespace Client
                     Console.WriteLine($"   ... и ещё {result.Errors.Count - 5}");
             }
             ui.ShowMessage("=================================");
+
+            ui.WaitForContinue();
         }
     }
 }

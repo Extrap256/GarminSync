@@ -3,7 +3,7 @@ using Client.Core.Interfaces.DTO;
 using EntityClassLibraryClient.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Client.Storage
+namespace Client.Infrastructure.Storage
 {
     public class LocalRepository : ILocalRepository
     {

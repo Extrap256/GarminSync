@@ -24,6 +24,8 @@ namespace EntityClassLibraryClient.Models
         public List<WorkoutSamples>? WorkoutSamples { get; set; }
         public List<Lap>? Laps { get; set; }
 
+        public bool IsSynced { get; set; } = false;
+
         public void SetIdentifier()
         {
             if (TimeStart == default)

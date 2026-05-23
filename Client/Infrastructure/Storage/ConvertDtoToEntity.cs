@@ -3,7 +3,7 @@ using EntityClassLibraryClient.Models;
 using static Client.Core.Interfaces.DTO.FitDataCollector;
 using static EntityClassLibraryClient.Models.WorkoutSkiing;
 
-namespace Client.Storage
+namespace Client.Infrastructure.Storage
 {
     public class ConvertDtoToEntity
     {

@@ -1,6 +1,6 @@
 ﻿using Client.Core.Interfaces;
 using Client.Core.Interfaces.DTO;
-using Client.Storage;
+using Client.Infrastructure.Storage;
 using EntityClassLibraryClient.Models;
 
 namespace Client.Services
