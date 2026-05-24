@@ -7,9 +7,9 @@ using Microsoft.Extensions.Options;
 
 namespace Client.Services
 {
-    public class AuthService (HttpClient httpClient, ITokenStorage tokenStorage, IOptions<ApiSettings> options) : IAuthService
+    public class AuthService (IHttpClientFactory httpClientFactory, ITokenStorage tokenStorage, IOptions<ApiSettings> options) : IAuthService
     {
-        private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        private readonly HttpClient _httpClient = httpClientFactory?.CreateClient("GarminApi") ?? throw new ArgumentNullException(nameof(httpClientFactory));
         private readonly ITokenStorage _tokenStorage = tokenStorage ?? throw new ArgumentNullException(nameof(tokenStorage));
         private readonly string _baseUrl = !string.IsNullOrEmpty(options.Value.BaseUrl) ? options.Value.BaseUrl : throw new InvalidOperationException("Отсутствует Api:DaseUrl");
 

@@ -7,6 +7,15 @@ namespace Client.Core.Interfaces
     public interface IAppUI
     {
         /// <summary>
+        /// Меню отчетов
+        /// </summary>
+        Task ReportMenuAsync(IReportService reportService, IAppUI ui, CancellationToken ct = default);
+
+        /// <summary>
+        /// Меню синхронизации с сервером
+        /// </summary>
+        Task SyncMenuAsync(IWorkoutSyncService syncService, IAppUI ui, CancellationToken ct = default);
+        /// <summary>
         /// Работа с профилем (вход, регистрация, работа локально)
         /// </summary>
         Task<AuthAction> ShowAuthMenuAsync(CancellationToken ct = default);

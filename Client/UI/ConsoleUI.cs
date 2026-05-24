@@ -1,4 +1,5 @@
-﻿using Client.Core.Interfaces;
+﻿using System.Globalization;
+using Client.Core.Interfaces;
 using Client.Core.Interfaces.DTO;
 using Client.Core.Interfaces.DTO.API;
 using Client.Core.Interfaces.Enums;
@@ -8,6 +9,83 @@ namespace Client.UI
     public class ConsoleUI : IAppUI
     {
         private const int ProgressBarWidth = 40;
+
+        public async Task SyncMenuAsync(
+            IWorkoutSyncService syncService,
+            IAppUI ui,
+            CancellationToken ct = default)
+        {
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Синхронизация с сервером");
+            Console.ResetColor();
+            Console.WriteLine();
+
+            try
+            {
+                ui.ShowMessage("Отправка несинхронизированных тренировок...");
+                var count = await syncService.SyncAllUnsyncedAsync(ct);
+
+                ui.ShowMessage($"\nСинхронизировано: {count} тренировок");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                ui.ShowError("Сессия истекла. Войдите заново.");
+            }
+            catch (Exception ex)
+            {
+                ui.ShowError($"Ошибка синхронизации: {ex.Message}");
+            }
+
+            ui.WaitForContinue();
+        }
+
+        public async Task ReportMenuAsync(
+            IReportService reportService,
+            IAppUI ui,
+            CancellationToken ct = default)
+        {
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Отчеты");
+            Console.ResetColor();
+            Console.WriteLine();
+
+            Console.Write("Дата начала (дд.мм.гггг): ");
+            var fromStr = Console.ReadLine();
+
+            Console.Write("Дата окончания (дд.мм.гггг): ");
+            var toStr = Console.ReadLine();
+
+            if (!DateTime.TryParse(fromStr, new CultureInfo("ru-RU"), out var from) || !DateTime.TryParse(toStr, new CultureInfo("ru-RU"), out var to))
+            {
+                ui.ShowError("Некорректный формат даты");
+                ui.WaitForContinue();
+                return;
+            }
+
+            try
+            {
+                var request = new PersonalReportRequest(from.Date, to.Date.AddDays(1).AddSeconds(-1));
+                var report = await reportService.GetPersonalReportAsync(request, ct);
+
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine(report.Content);
+                Console.ResetColor();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                ui.ShowError("Сессия истекла");
+            }
+            catch (Exception ex)
+            {
+                ui.ShowError($"Ошибка получения отчета: {ex.Message}");
+            }
+
+            ui.WaitForContinue();
+        }
+
         /// <summary>
         /// Работа с профилем (вход, регистрация, работа локально)
         /// </summary>

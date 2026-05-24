@@ -10,9 +10,9 @@ using Microsoft.Extensions.Options;
 
 namespace Client.Services
 {
-    public class UserService(HttpClient httpClient, IOptions<ApiSettings> options) : IUserService
+    public class UserService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> options) : IUserService
     {
-        private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        private readonly HttpClient _httpClient = httpClientFactory?.CreateClient("GarminApi") ?? throw new ArgumentNullException(nameof(httpClientFactory));
         private readonly ApiSettings _settings = options.Value ?? throw new ArgumentNullException(nameof(options));
 
         private static readonly JsonSerializerOptions JsonOptions = new()

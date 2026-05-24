@@ -25,6 +25,7 @@ namespace EntityClassLibraryClient.Models
         public List<Lap>? Laps { get; set; }
 
         public bool IsSynced { get; set; } = false;
+        public DateTime? LastSyncedAt { get; set; }
 
         public void SetIdentifier()
         {
@@ -32,6 +33,11 @@ namespace EntityClassLibraryClient.Models
                 throw new InvalidOperationException("TimeStart must be set");
 
             _identifier = $"{SerialNumberDevice}_{TimeStart}";
+        }
+        public void MarkAsUnsynced()
+        {
+            IsSynced = false;
+            LastSyncedAt = null;
         }
     }
 }

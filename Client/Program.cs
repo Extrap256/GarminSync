@@ -98,7 +98,8 @@ namespace Client
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
             services.AddSingleton<ITokenStorage, TokenStorage>(_ => new TokenStorage(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)));
-
+            services.AddScoped<IWorkoutSyncService, WorkoutSyncService>();
+            services.AddScoped<IReportService, ReportService>();
 
             services.AddSingleton<IDeviceScanner>(_ => new DeviceScanner(actPath, devPath));
             services.AddScoped<IFitParser, FitParser>();
@@ -123,6 +124,8 @@ namespace Client
             var userService = sp.GetRequiredService<IUserService>();
             var scanner = sp.GetRequiredService<IDeviceScanner>();
             var orchestrator = sp.GetRequiredService<ISyncOrchestrator>();
+            var syncService = sp.GetRequiredService<IWorkoutSyncService>();
+            var reportService = sp.GetRequiredService<IReportService>();
 
             ui.ShowHeader();
 
@@ -134,7 +137,7 @@ namespace Client
             while (!ct.IsCancellationRequested)
             {
                 bool continueRunning = authService.IsAuthenticated()
-                    ? await ShowMainMenuAsync(ui, authService, userService, scanner, orchestrator, ct)
+                    ? await ShowMainMenuAsync(ui, authService, userService, scanner, orchestrator, syncService, reportService, ct)
                     : await ShowLimitedMenuAsync(ui, authService, scanner, orchestrator, ct);
 
                 if (!continueRunning)
@@ -245,6 +248,8 @@ namespace Client
             IUserService userService,
             IDeviceScanner scanner,
             ISyncOrchestrator orchestrator,
+            IWorkoutSyncService syncService,
+            IReportService reportService,
             CancellationToken ct)
         {
             while (!ct.IsCancellationRequested)
@@ -258,7 +263,8 @@ namespace Client
                 Console.WriteLine("1. Синхронизация с часов");
                 Console.WriteLine("2. Мой профиль");
                 Console.WriteLine("3. Отправить данные на сервер");
-                Console.WriteLine("4. Выйти из аккаунта");
+                Console.WriteLine("4. Получить отчет");
+                Console.WriteLine("5. Выйти из аккаунта");
 
                 Console.WriteLine("0. Выход из программы");
                 Console.Write("\nВыбор: ");
@@ -276,11 +282,14 @@ namespace Client
                         break;
 
                     case "3" when authService.IsAuthenticated():
-                        ui.ShowMessage("Отправка на сервер...");
-                        // Добавить отправку на сервер
+                        await ui.SyncMenuAsync(syncService, ui, ct);
                         break;
 
-                    case "4" when authService.IsAuthenticated():
+                    case "4":
+                        await ui.ReportMenuAsync(reportService, ui, ct);
+                        break;
+
+                    case "5" when authService.IsAuthenticated():
                         await authService.LogoutAsync(ct);
                         ui.ShowMessage("Выход выполнен");
                         ui.WaitForContinue();
