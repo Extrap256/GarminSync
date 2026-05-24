@@ -8,8 +8,8 @@ namespace EntityClassLibraryClient.Models
     {
         [Key]
         public int DeviceId {  get; set; }
-        public int UserId {  get; set; }
-        public User? User { get; set; }
+        //public int UserId {  get; set; }
+        //public User? User { get; set; }
         public string? Name {  get; set; }
         public ushort? Model {  get; set; }
         public uint? SerialNumber {  get; set; }

@@ -281,7 +281,7 @@ namespace Client
                         await ui.ProfileMenuAsync(userService, ct);
                         break;
 
-                    case "3" when authService.IsAuthenticated():
+                    case "3":
                         await ui.SyncMenuAsync(syncService, ui, ct);
                         break;
 
@@ -289,7 +289,7 @@ namespace Client
                         await ui.ReportMenuAsync(reportService, ui, ct);
                         break;
 
-                    case "5" when authService.IsAuthenticated():
+                    case "5":
                         await authService.LogoutAsync(ct);
                         ui.ShowMessage("Выход выполнен");
                         ui.WaitForContinue();

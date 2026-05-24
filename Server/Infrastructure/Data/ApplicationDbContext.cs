@@ -58,6 +58,39 @@ namespace Server.Infrastructure.Data
                 .WithMany(u => u.CreatedGroups)
                 .HasForeignKey(g => g.CreatorId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+
+            // Настройка связи Workout => Device
+            modelBuilder.Entity<Workout>()
+                .HasOne(w => w.Device)
+                .WithMany(d => d.Workouts)
+                .HasForeignKey(w => w.DeviceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            //Дискриминатор
+            modelBuilder.Entity<Workout>()
+                .HasDiscriminator<string>("WorkoutType")
+                //.HasValue<Workout>("BaseWorkout")
+                .HasValue<WorkoutRunning>("WorkoutRunning")
+                .HasValue<WorkoutCycling>("WorkoutCycling")
+                .HasValue<WorkoutSkiing>("WorkoutSkiing")
+                .HasValue<WorkoutOther>("WorkoutOther");
+
+            // То же самое для лапов
+            modelBuilder.Entity<Lap>()
+                .HasDiscriminator<string>("LapType")
+                //.HasValue<Lap>("BaseLap")
+                .HasValue<LapRunning>("LapRunning")
+                .HasValue<LapCycling>("LapCycling")
+                .HasValue<LapOther>("LapOther");
+
+            // То же самое для семплов
+            modelBuilder.Entity<WorkoutSamples>()
+                .HasDiscriminator<string>("SampleType")
+                //.HasValue<WorkoutSamples>("BaseSample")
+                .HasValue<WorkoutSamplesRunning>("WorkoutSamplesRunning")
+                .HasValue<WorkoutSamplesCycling>("WorkoutSamplesCycling")
+                .HasValue<WorkoutSamplesOther>("WorkoutSamplesOther");
         }
     }
 }

@@ -78,7 +78,7 @@ namespace Client.Services
                 }
                 catch (Exception ex)
                 {
-                    errors.Add($"{fileName}: {ex.Message}");
+                    errors.Add($"{fileName}: {ex.Message}_{ex.InnerException?.Message}");
                 }
             }
 

@@ -21,7 +21,7 @@ namespace Server.Core.Services
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 YearOfBirth = user.YearOfBirth,
-                //CreatedAt = user.CreatedAt
+                CreatedAt = user.CreatedAt
             };
         }
 

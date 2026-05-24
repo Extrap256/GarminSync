@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Json;
+using System.Net.WebSockets;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Client.Core.Interfaces;
@@ -26,11 +27,10 @@ namespace Client.Services
         private readonly LocalDataBaseContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         private readonly HttpClient _httpClient = httpClientFactory?.CreateClient("GarminApi") ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
-
         public async Task<SyncWorkoutResponse> SyncWorkoutAsync(SyncWorkoutRequest request, CancellationToken ct = default)
         {
             var response = await _httpClient.PostAsJsonAsync(
-                $"{_settings.BaseUrl}",
+                $"{_settings.BaseUrl}/workouts/sync",
                 request,
                 JsonOptions,
                 ct);
