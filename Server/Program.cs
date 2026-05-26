@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using Server.API.Endpoints;
 using Server.Common.Exceptions;
 using Server.Core.Interfaces;
@@ -34,12 +35,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' не найден");
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+var dataSource = dataSourceBuilder.Build();
 
+//builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(dataSource, npgsqlOptions =>
+    {
+        npgsqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorCodesToAdd: null);
+    }));
 
 
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddTransient<IWorkoutSyncService, WorkoutSyncService>();
+builder.Services.AddScoped<IWorkoutSyncService, WorkoutSyncService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IReportService, ReportService>();
@@ -47,11 +61,6 @@ builder.Services.AddScoped<IReportService, ReportService>();
 
 
 var app = builder.Build();
-
-
-app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
 
 app.Use(async (context, next) =>
 {
@@ -71,6 +80,12 @@ app.Use(async (context, next) =>
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsJsonAsync(new { error = ex.Message });
     }
+    catch (NotFoundException ex)
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+    }
     catch (DuplicateWorkoutException ex)
     {
         context.Response.StatusCode = StatusCodes.Status409Conflict;
@@ -78,12 +93,21 @@ app.Use(async (context, next) =>
     }
     catch (Exception ex)
     {
-        // Потом: logger.LogError(ex, "Unhandled exception");
+        app.Logger.LogError(ex, "Unhandled exception");
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsJsonAsync(new { error = "Внутренняя ошибка сервера: " + ex.Message });
     }
 });
+
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapAuthEndpoints();
 app.MapWorkoutEndpoints();

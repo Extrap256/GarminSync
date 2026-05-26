@@ -1,0 +1,53 @@
+services:
+  # PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: garmin_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-garminsync}
+      POSTGRES_USER: ${POSTGRES_USER:-garmin_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-StrongPassword123!}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"  # Только для разработки! В проде убрать
+    networks:
+      - garmin_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-garmin_user} -d ${POSTGRES_DB:-garminsync}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ASP.NET Core Server
+  server:
+    image: ${DOCKER_REGISTRY-}server
+    container_name: garmin_server
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Server/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB:-garminsync};Username=${POSTGRES_USER:-garmin_user};Password=${POSTGRES_PASSWORD:-StrongPassword123!}
+      - Jwt__Secret=${JWT_SECRET:-MySuperSecretKey_TestSystemOnlyForMe_ChangeInProductionPlease123!}
+      - Jwt__ExpiryHours=${JWT_EXPIRY_HOURS:-24}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+      - "${SERVER_HTTPS_PORT:-8081}:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy  # Ждём готовности БД!
+    networks:
+      - garmin_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  garmin_network:
+    driver: bridge

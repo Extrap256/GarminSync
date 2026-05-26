@@ -364,3 +364,7 @@ FodyWeavers.xsd
 /Server/garmin_test.db
 /Server/garmin_test.db-shm
 /Server/garmin_test.db-wal
+
+# Docker secrets
+.env
+.env.production

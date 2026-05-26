@@ -1,5 +1,11 @@
 <Solution>
+  <Folder Name="/Элементы решения/">
+    <File Path=".env" />
+  </Folder>
   <Project Path="Client/Client.csproj" />
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
   <Project Path="EntityClassLibrary/EntityClassLibraryServer.csproj" Id="2156ad19-f999-4c3c-8861-e67052f6b627" />
   <Project Path="EntityClassLibraryClient/EntityClassLibraryClient.csproj" Id="1f026483-277e-4d03-a469-f8855f7f089f" />
   <Project Path="Server/Server.csproj" Id="e306b41e-aa98-486c-9d33-455d5132ff1f" />
