@@ -8,7 +8,7 @@ namespace Client.Core.Interfaces.DTO.API
         public DateTime TimeEnd { get; set; }
         public string Identifier { get; set; } = null!;
         public string SportType { get; set; } = null!;
-        public uint SerialNumberDevice { get; set; }
+        public uint? SerialNumberDevice { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public uint? DistanceMeters { get; set; }
         public int Duration { get; set; } // Секунды

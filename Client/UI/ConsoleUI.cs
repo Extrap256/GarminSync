@@ -3,17 +3,246 @@ using Client.Core.Interfaces;
 using Client.Core.Interfaces.DTO;
 using Client.Core.Interfaces.DTO.API;
 using Client.Core.Interfaces.Enums;
+using EntityClassLibraryClient.Models;
 
 namespace Client.UI
 {
-    public class ConsoleUI : IAppUI
+    public class ConsoleUI (ILocalRepository repository,
+        IWorkoutSyncService syncService,
+        IReportService reportService,
+        IUserService userService) : IAppUI
     {
         private const int ProgressBarWidth = 40;
 
-        public async Task SyncMenuAsync(
-            IWorkoutSyncService syncService,
-            IAppUI ui,
-            CancellationToken ct = default)
+        private readonly ILocalRepository repository = repository;
+        private readonly IWorkoutSyncService syncService = syncService;
+        private readonly IReportService reportService = reportService;
+        private readonly IUserService userService = userService;
+
+        public async Task AddVirtualWorkoutAsync(CancellationToken ct = default)
+        {
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Новая тренировка");
+            Console.ResetColor();
+            Console.WriteLine();
+
+            try
+            {
+                Console.WriteLine("Тип тренировки:");
+                Console.WriteLine("1. Бег");
+                Console.WriteLine("2. Велосипед");
+                Console.WriteLine("3. Лыжи");
+                Console.WriteLine("4. Другое");
+                Console.WriteLine("0. Отмена");
+
+                Console.Write("Выбор: ");
+                var typeInput = Console.ReadLine()?.Trim();
+
+                if (typeInput == "0")
+                    return;
+
+                Console.Write("Время начала (dd.MM.YYYY HH:mm): ");
+                if (!DateTime.TryParse(Console.ReadLine(), out DateTime timeStart))
+                {
+                    ShowError("Некорректная дата");
+                    return;
+                }
+
+                Console.Write("Время конца (dd.MM.YYYY HH:mm): ");
+                if (!DateTime.TryParse(Console.ReadLine(), out DateTime timeEnd) || timeEnd <= timeStart)
+                {
+                    ShowError("Время конца должно быть позже начала");
+                    return;
+                }
+
+                Console.Write("Дистанция (м, Enter - пропустить): ");
+                uint? distance = uint.TryParse(Console.ReadLine(), out uint d) ? d : null;
+
+                Console.Write("Средний пульс (уд/мин, Enter - пропустить): ");
+                byte? hr = byte.TryParse(Console.ReadLine(), out byte h) ? h : null;
+
+                Console.Write("Набор высоты (м, Enter — пропустить): ");
+                int? elev = int.TryParse(Console.ReadLine(), out int e) ? e : null;
+
+                Console.Write("Описание (Enter — пропустить): ");
+                var description = Console.ReadLine();
+
+                var virtualDevice = await repository.GetOrCreateVirtualDeviceAsync(ct);
+
+                Workout workout = typeInput switch
+                {
+                    "1" => new WorkoutRunning(),
+                    "2" => new WorkoutCycling(),
+                    "3" => new WorkoutSkiing(),
+                    _ => new WorkoutOther()
+                };
+
+                workout.Device = virtualDevice;
+                workout.DeviceId = virtualDevice.DeviceId;
+                workout.TimeStart = timeStart;
+                workout.TimeEnd = timeEnd;
+                workout.DistanceMeters = distance;
+                workout.AvgHeartRate = hr;
+                workout.ElevationGain = elev;
+                workout.Description = description;
+
+                workout.SetIdentifier();
+
+                if (await repository.ExistByIdentifierAsync(workout.Identifier, ct))
+                {
+                    ShowError($"Тренировка на это время уже существует");
+                    WaitForContinue();
+                    return;
+                }
+
+                await repository.AddAsync(workout, null, ct);
+                await repository.SaveChangeAsync(ct);
+
+                ShowMessage($"Тренировка #{workout.WorkoutId} добавлена (ID: {workout.Identifier + 1})");
+                WaitForContinue();
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Ошибка: {ex.Message}");
+                WaitForContinue();
+            }
+        }
+        public async Task WorkoutsMenuAsync(CancellationToken ct = default)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                Console.Clear();
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine("Мои тренировки");
+                Console.ResetColor();
+                Console.WriteLine();
+
+                var workouts = await repository.GetAllWorkoutsAsync(ct);
+
+                if (workouts.Count == 0)
+                {
+                    ShowMessage("Нет тренировок");
+                    WaitForContinue();
+                    return;
+                }
+
+                Console.WriteLine($"{"ID",4} │ {"Дата",10} │ {"Тип",15} │ {"Дистанция",10} │ {"Синхр",5}");
+                Console.WriteLine(new string('-', 55));
+
+                foreach (var workout in workouts.Take(30))
+                {
+                    var type = workout.GetType().Name.Replace("Workout", "");
+                    var dist = workout.DistanceMeters.HasValue ? $"{workout.DistanceMeters / 1000.0:F2} км" : "-";
+                    var sync = workout.IsSynced ? "Да" : "Нет";
+                    Console.WriteLine($"{workout.WorkoutId + 1,4} │ {workout.TimeStart:yyyy.MM.dd} │ {type,-15} │ {dist,10} │ {sync,5}");
+                }
+
+                if (workouts.Count > 20)
+                    Console.WriteLine($"... и еще {workouts.Count - 20}");
+
+                Console.WriteLine("Введите ID тренировки для редактирования (0 - назад)");
+                var input = Console.ReadLine()?.Trim();
+
+                if (input == "0" || string.IsNullOrEmpty(input))
+                    return;
+
+                if (int.TryParse(input, out int id))
+                {
+                    await EditWorkoutAsync(id, ct);
+                }
+            }
+        }
+
+        public async Task EditWorkoutAsync(int workoutId, CancellationToken ct)
+        {
+            var workout = await repository.GetWorkoutByIdAsync(workoutId, ct);
+            if (workout == null)
+            {
+                ShowError($"Тренировка #{workoutId + 1} не найдена");
+                WaitForContinue();
+                return;
+            }
+
+            while (!ct.IsCancellationRequested)
+            {
+                Console.Clear();
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"Редактирование тренировки");
+                Console.ResetColor();
+                Console.WriteLine();
+
+                Console.WriteLine($"1. Описание:      {workout.Description ?? "—"}");
+                Console.WriteLine($"2. Дистанция:     {workout.DistanceMeters?.ToString() ?? "—"} м");
+                Console.WriteLine($"3. Ср. пульс:     {workout.AvgHeartRate?.ToString() ?? "—"} уд/мин");
+                Console.WriteLine($"4. Набор высоты:  {workout.ElevationGain?.ToString() ?? "—"} м");
+                Console.WriteLine($"5. Время начала:  {workout.TimeStart:dd.MM.yyyy HH:mm}");
+                Console.WriteLine($"6. Общее время:   {workout.TimeEnd:dd.MM.yyyy HH:mm}");
+                Console.WriteLine($"\nСинхронизировано: {(workout.IsSynced ? "Да" : "Нет")}");
+                Console.WriteLine();
+                Console.WriteLine("Выберите поле для изменения (s — сохранить, 0 — отмена): ");
+
+                var choice = Console.ReadLine()?.Trim().ToLower();
+
+                try
+                {
+                    switch (choice)
+                    {
+                        case "1":
+                            Console.Write("Новое описание: ");
+                            workout.Description = Console.ReadLine();
+                            break;
+                        case "2":
+                            Console.Write("Новая дистанция (м): ");
+                            if (uint.TryParse(Console.ReadLine(), out uint dist))
+                                workout.DistanceMeters = dist;
+                            break;
+                        case "3":
+                            Console.Write("Новая средний пульс (уд/мин): ");
+                            if (byte.TryParse(Console.ReadLine(), out byte hr))
+                                workout.AvgHeartRate = hr;
+                            break;
+                        case "4":
+                            Console.Write("Новый набор высоты (м): ");
+                            if (int.TryParse(Console.ReadLine(), out int elev))
+                                workout.ElevationGain = elev;
+                            break;
+                        case "5":
+                            Console.Write("Новое время начала (dd.MM.yyyy HH:mm): ");
+                            if (DateTime.TryParse(Console.ReadLine()?.Trim(), out DateTime start))
+                                workout.TimeStart = start;
+                            break;
+                        // Сделать
+                        //case "6":
+                        //    Console.Write("Новое общее время (HH:mm): ");
+                        //    if (TimeSpan.TryParse(Console.ReadLine(), out TimeSpan dist))
+                        //        workout.DistanceMeters = dist;
+                        //    break;
+                        case "s":
+                            if (workout.TimeEnd <= workout.TimeStart)
+                            {
+                                ShowError("Время конца должно быть позже начала");
+                                WaitForContinue();
+                                continue;
+                            }
+                            await repository.UpdateWorkoutAsync(workout, ct);
+                            await repository.SaveChangeAsync(ct);
+                            ShowMessage("Сохранено. Тренировка помечена как несинхронизированная");
+                            WaitForContinue();
+                            return;
+                        case "0":
+                            return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ShowError($"Ошибка: {ex.Message}");
+                    WaitForContinue();
+                }
+            }
+        }
+
+        public async Task SyncMenuAsync(CancellationToken ct = default)
         {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Yellow;
@@ -23,27 +252,24 @@ namespace Client.UI
 
             try
             {
-                ui.ShowMessage("Отправка несинхронизированных тренировок...");
+                ShowMessage("Отправка несинхронизированных тренировок...");
                 var count = await syncService.SyncAllUnsyncedAsync(ct);
 
-                ui.ShowMessage($"\nСинхронизировано: {count} тренировок");
+                ShowMessage($"\nСинхронизировано: {count} тренировок");
             }
             catch (UnauthorizedAccessException)
             {
-                ui.ShowError("Сессия истекла. Войдите заново.");
+                ShowError("Сессия истекла. Войдите заново.");
             }
             catch (Exception ex)
             {
-                ui.ShowError($"Ошибка синхронизации: {ex.Message}");
+                ShowError($"Ошибка синхронизации: {ex.Message}");
             }
 
-            ui.WaitForContinue();
+            WaitForContinue();
         }
 
-        public async Task ReportMenuAsync(
-            IReportService reportService,
-            IAppUI ui,
-            CancellationToken ct = default)
+        public async Task ReportMenuAsync(CancellationToken ct = default)
         {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -59,8 +285,8 @@ namespace Client.UI
 
             if (!DateTime.TryParse(fromStr, new CultureInfo("ru-RU"), out var from) || !DateTime.TryParse(toStr, new CultureInfo("ru-RU"), out var to))
             {
-                ui.ShowError("Некорректный формат даты");
-                ui.WaitForContinue();
+                ShowError("Некорректный формат даты");
+                WaitForContinue();
                 return;
             }
 
@@ -76,14 +302,14 @@ namespace Client.UI
             }
             catch (UnauthorizedAccessException)
             {
-                ui.ShowError("Сессия истекла");
+                ShowError("Сессия истекла");
             }
             catch (Exception ex)
             {
-                ui.ShowError($"Ошибка получения отчета: {ex.Message}");
+                ShowError($"Ошибка получения отчета: {ex.Message}");
             }
 
-            ui.WaitForContinue();
+            WaitForContinue();
         }
 
         /// <summary>
@@ -130,7 +356,7 @@ namespace Client.UI
         /// <summary>
         /// Вывод профиля с возможностью изменения
         /// </summary>
-        public async Task ProfileMenuAsync(IUserService userService, CancellationToken ct = default)
+        public async Task ProfileMenuAsync(CancellationToken ct = default)
         {
             while (!ct.IsCancellationRequested)
             {

@@ -217,7 +217,9 @@ namespace Client
                 Console.WriteLine();
 
                 Console.WriteLine("1. Синхронизация с часов");
-                Console.WriteLine("2. Авторизация");
+                Console.WriteLine("2. Добавить тренировку вручную");
+                Console.WriteLine("3. Мои тренировки");
+                Console.WriteLine("4. Авторизация");
                 Console.WriteLine("0. Выход из программы");
                 Console.Write("\nВыбор: ");
 
@@ -228,13 +230,17 @@ namespace Client
                     case "1":
                         await SyncFromDeviceAsync(ui, scanner, orchestrator, ct);
                         break;
-
                     case "2":
+                        await ui.AddVirtualWorkoutAsync(ct);
+                        break;
+                    case "3":
+                        await ui.WorkoutsMenuAsync(ct);
+                        break;
+                    case "4":
                         var result = await Authorization(authService, ui, ct);
                         if (result == AuthAction.Exit)
                             return false;
                         return true;
-
                     case "0":
                         return false;
                 }
@@ -261,10 +267,12 @@ namespace Client
                 Console.WriteLine();
 
                 Console.WriteLine("1. Синхронизация с часов");
-                Console.WriteLine("2. Мой профиль");
-                Console.WriteLine("3. Отправить данные на сервер");
-                Console.WriteLine("4. Получить отчет");
-                Console.WriteLine("5. Выйти из аккаунта");
+                Console.WriteLine("2. Добавить тренировку вручную");
+                Console.WriteLine("3. Мои тренировки");
+                Console.WriteLine("4. Мой профиль");
+                Console.WriteLine("5. Отправить данные на сервер");
+                Console.WriteLine("6. Получить отчет");
+                Console.WriteLine("7. Выйти из аккаунта");
 
                 Console.WriteLine("0. Выход из программы");
                 Console.Write("\nВыбор: ");
@@ -276,20 +284,25 @@ namespace Client
                     case "1":
                         await SyncFromDeviceAsync(ui, scanner, orchestrator, ct);
                         break;
-
                     case "2":
-                        await ui.ProfileMenuAsync(userService, ct);
+                        await ui.AddVirtualWorkoutAsync(ct);
                         break;
-
                     case "3":
-                        await ui.SyncMenuAsync(syncService, ui, ct);
+                        await ui.WorkoutsMenuAsync(ct);
                         break;
-
                     case "4":
-                        await ui.ReportMenuAsync(reportService, ui, ct);
+                        await ui.ProfileMenuAsync(ct);
                         break;
 
                     case "5":
+                        await ui.SyncMenuAsync(ct);
+                        break;
+
+                    case "6":
+                        await ui.ReportMenuAsync(ct);
+                        break;
+
+                    case "7":
                         await authService.LogoutAsync(ct);
                         ui.ShowMessage("Выход выполнен");
                         ui.WaitForContinue();

@@ -15,7 +15,7 @@ namespace Client.Core.Interfaces
         /// </summary>
         /// <param name="workout">Сущность тренировки</param>
         /// <param name="SerialNumberDevice">Серийный номер устройства, к которому будет привязана тренировка</param>
-        Task AddAsync(Workout workout, uint SerialNumberDevice, CancellationToken ct = default);
+        Task AddAsync(Workout workout, uint? SerialNumberDevice, CancellationToken ct = default);
 
         /// <summary>
         /// Сохранение изменений в БД
@@ -27,5 +27,10 @@ namespace Client.Core.Interfaces
         /// <param name="serialNumber">Серийный номер устройства</param>
         /// <returns></returns>
         Task<Device> GetOrCreateDeviceAsync(uint serialNumber);
+
+        Task<IReadOnlyList<Workout>> GetAllWorkoutsAsync(CancellationToken ct = default);
+        Task<Workout?> GetWorkoutByIdAsync(int workoutId, CancellationToken ct = default);
+        Task UpdateWorkoutAsync(Workout workout, CancellationToken cancellationToken = default);
+        Task<Device> GetOrCreateVirtualDeviceAsync(CancellationToken ct = default);
     }
 }

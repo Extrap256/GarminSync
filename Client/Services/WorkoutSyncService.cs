@@ -110,7 +110,7 @@ namespace Client.Services
 
             if ((workout.WorkoutSamples?.Count ?? 0) != 0)
             {
-                request.WorkoutSamples = workout.WorkoutSamples.Select(s => new SyncWorkoutSampleRequest()
+                request.WorkoutSamples = workout.WorkoutSamples!.Select(s => new SyncWorkoutSampleRequest()
                 {
                     TimeSeconds = s.TimeSeconds,
                     DistanceMeters = s.DistanceMeters,

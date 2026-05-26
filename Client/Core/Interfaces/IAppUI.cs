@@ -7,14 +7,29 @@ namespace Client.Core.Interfaces
     public interface IAppUI
     {
         /// <summary>
+        /// Добавление вирутальной тренировки
+        /// </summary>=
+        Task AddVirtualWorkoutAsync(CancellationToken ct = default);
+
+        /// <summary>
+        /// Вывод меню тренировок
+        /// </summary>
+        Task WorkoutsMenuAsync(CancellationToken ct = default);
+
+        /// <summary>
+        /// Вывод менб изменения тренировки по Id
+        /// </summary>
+        Task EditWorkoutAsync(int workoutId, CancellationToken ct);
+
+        /// <summary>
         /// Меню отчетов
         /// </summary>
-        Task ReportMenuAsync(IReportService reportService, IAppUI ui, CancellationToken ct = default);
+        Task ReportMenuAsync(CancellationToken ct = default);
 
         /// <summary>
         /// Меню синхронизации с сервером
         /// </summary>
-        Task SyncMenuAsync(IWorkoutSyncService syncService, IAppUI ui, CancellationToken ct = default);
+        Task SyncMenuAsync(CancellationToken ct = default);
         /// <summary>
         /// Работа с профилем (вход, регистрация, работа локально)
         /// </summary>
@@ -23,7 +38,7 @@ namespace Client.Core.Interfaces
         /// <summary>
         /// Вывод профиля с возможностью изменения
         /// </summary>
-        Task ProfileMenuAsync(IUserService userService, CancellationToken ct = default);
+        Task ProfileMenuAsync(CancellationToken ct = default);
         
         /// <summary>
         /// Метод для входа пользователя в систему

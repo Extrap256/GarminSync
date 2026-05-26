@@ -32,7 +32,7 @@
             if (!TimeStartUtc.HasValue)
                 throw new NullReferenceException("Поле TimeStart не содержит данных");
 
-            return $"{DeviceData.SerialNumber}_{TimeStartUtc}";
+            return $"{DeviceData.SerialNumber}_{TimeStartUtc.Value.AddSeconds(OffsetInSeconds)}";
         }
     }
 }
