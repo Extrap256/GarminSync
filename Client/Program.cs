@@ -21,7 +21,12 @@ namespace Client
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .AddCommandLine(args)
                 .Build();
+#if DEBUG
+            Console.WriteLine("API BaseUrl" + configuration["Api:BaseUrl"]);
+#endif
 
             // Настройка DI-контейнера
             var services = new ServiceCollection();

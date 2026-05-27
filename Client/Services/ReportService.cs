@@ -25,10 +25,11 @@ namespace Client.Services
             PersonalReportRequest request,
             CancellationToken ct = default)
         {
-            var response = await _httpClient.PostAsJsonAsync(
+            var content = ApiHelper.CreateJsonContent(request);
+
+            var response = await _httpClient.PostAsync(
                 $"{_settings.BaseUrl}/reports/personal",
-                request,
-                JsonOptions,
+                content,
                 ct);
 
             if (response.StatusCode == HttpStatusCode.Unauthorized)

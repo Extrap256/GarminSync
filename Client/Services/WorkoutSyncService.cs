@@ -31,11 +31,8 @@ namespace Client.Services
 
         public async Task<SyncWorkoutResponse> SyncWorkoutAsync(SyncWorkoutRequest request, CancellationToken ct = default)
         {
-            var response = await _httpClient.PostAsJsonAsync(
-                $"{_settings.BaseUrl}/workouts/sync",
-                request,
-                JsonOptions,
-                ct);
+            var content = ApiHelper.CreateJsonContent(request);
+            var response = await _httpClient.PostAsync($"{_settings.BaseUrl}/workouts/sync", content, ct);
 
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 throw new UnauthorizedAccessException("Токен истек");
@@ -176,10 +173,10 @@ namespace Client.Services
 
         private async Task<BatchSyncWorkoutsResponse?> SendBatchAsync(BatchSyncWorkoutsRequest request, CancellationToken ct)
         {
-            var response = await _httpClient.PostAsJsonAsync($"{_settings.BaseUrl}/workouts/sync/batch",
-                request,
-                JsonOptions,
-                ct);
+            var content = ApiHelper.CreateJsonContent(request);
+            var response = await _httpClient.PostAsync($"{_settings.BaseUrl}/workouts/sync/batch", content, ct);
+
+            
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 throw new UnauthorizedAccessException("Токен истек. Войдите заново");
 

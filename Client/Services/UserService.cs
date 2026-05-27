@@ -39,13 +39,11 @@ namespace Client.Services
         {
             ArgumentNullException.ThrowIfNull(request);
             if (!request.HasChanges)
-                throw new ArgumentException("Нет полей ля обновления", nameof(request));
+                throw new ArgumentException("Нет полей для обновления", nameof(request));
 
-            var response = await _httpClient.PutAsJsonAsync
-                ($"{_settings.BaseUrl}/users/me",
-                request,
-                JsonOptions,
-                ct);
+            var content = ApiHelper.CreateJsonContent(request);
+            var response = await _httpClient.PutAsync($"{_settings.BaseUrl}/users/me", content, ct);
+
 
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 throw new UnauthorizedAccessException("Токен истек или недействителен");
