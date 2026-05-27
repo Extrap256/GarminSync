@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EntityClassLibraryServer.Models
 {
-    [Index("Identifier", IsUnique = true)]
+    [Index("Identifier")]
     [Index("TimeStart", IsDescending = [true])]
     public abstract class Workout
     {

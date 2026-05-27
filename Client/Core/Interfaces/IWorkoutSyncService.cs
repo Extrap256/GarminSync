@@ -13,5 +13,12 @@ namespace Client.Core.Interfaces
         /// Синхронизировать все несинхронизированные тренировки
         /// </summary>
         Task<int> SyncAllUnsyncedAsync(CancellationToken ct = default);
+        
+        /// <summary>
+        /// Массовая синхронизация всех несинхронизированных тренировок.
+        /// Разбивает на чанки по 50 и отправляет батчами.
+        /// Возвращает сводку результатов.
+        /// </summary>
+        Task<BatchSyncResult> SyncAllUnsyncedBatchAsync(CancellationToken ct = default);
     }
 }

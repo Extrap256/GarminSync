@@ -1,5 +1,6 @@
 ﻿using EntityClassLibraryServer.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Server.API.Models.Workout;
 using Server.Common.Exceptions;
 using Server.Core.Interfaces;
@@ -16,12 +17,7 @@ namespace Server.Core.Services
 
         public async Task<int> SyncWorkoutAsync(int userId, WorkoutDto dto, CancellationToken ct = default)
         {
-            Device? device = null;
-
-            //Если виртуальное устройство
-            dto.SerialNumberDevice ??= 0;
-
-            device = await _context.Devices
+            Device? device = await _context.Devices
                                 .FirstOrDefaultAsync(x =>
                                 x.UserId == userId &&
                                 x.SerialNumber == dto.SerialNumberDevice,
@@ -29,22 +25,37 @@ namespace Server.Core.Services
 
             if (device == null)
             {
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId, ct) ?? throw new NotFoundException("Пользователь не найден");
+
                 device = new()
                 {
-                    SerialNumber = dto.SerialNumberDevice!,
+                    SerialNumber = dto.SerialNumberDevice,
                     UserId = userId,
                     User = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId, ct),
+                    IsVirtual = dto.SerialNumberDevice == null,
                     CreatedAt = DateTime.UtcNow,
                 };
 
                 _context.Devices.Add(device);
                 await _context.SaveChangesAsync(ct);
-                _logger.LogInformation("Создано новое устройство {SerialNumber} для пользователя {UserId}", dto.SerialNumberDevice, userId);
+                _logger.LogInformation("Создано новое {Type} устройство {SerialNumber} для пользователя {UserId}",
+                    device.IsVirtual ? "виртуальное" : "реальное",
+                    dto.SerialNumberDevice?.ToString() ?? "<virtual>",
+                    userId);
             }
 
-            bool isDuplicate = await IsWorkoutExistAsync(dto.Identifier, ct);
-            if (isDuplicate)
-                throw new DuplicateWorkoutException("Тренировка уже есть в БД");
+            Workout? existingWorkout = await _context.Workouts
+                .Include(w => w.WorkoutSamples)
+                .Include(w => w.Laps)
+                .FirstOrDefaultAsync(x => x.Identifier == dto.Identifier, ct);
+
+
+            if (existingWorkout != null)
+            {
+                _context.WorkoutSamples.RemoveRange(existingWorkout.WorkoutSamples ?? []);
+                _context.Laps.RemoveRange(existingWorkout.Laps ?? []);
+                _context.Workouts.Remove(existingWorkout);
+            }
 
             Workout workout = dto.SportType switch
             {
@@ -66,7 +77,7 @@ namespace Server.Core.Services
             workout.Description = dto.Description;
             workout.DistanceMeters = dto.DistanceMeters;
             workout.ElevationGain = dto.ElevationGain;
-            workout.SerialNumberDevice = dto.SerialNumberDevice.Value;
+            workout.SerialNumberDevice = dto.SerialNumberDevice ?? 0;
             workout.TimeStart = dto.TimeStart;
             workout.TimeEnd = dto.TimeEnd;
             workout.SetIdentifier();
@@ -119,13 +130,61 @@ namespace Server.Core.Services
 
             Workout? resultW = await _context.Workouts.FirstOrDefaultAsync(x => x.Identifier == dto.Identifier, ct) ?? workout;
             _context.Entry(resultW).Reference(w => w.Device).Load();
-            _context.Entry(resultW.Device).Reference(d => d.User).Load();
+            _context.Entry(resultW.Device!).Reference(d => d.User).Load();
 
             _logger.LogInformation("Тренировка {WorkoutId} устройства {DeviceId} пользователя {UserId} успешно сохранена", resultW.WorkoutId, resultW.Device?.DeviceId, resultW.Device?.User?.UserId);
 
             return resultW.WorkoutId;
         }
+        public async Task<WorkoutBatchSyncResponse> SyncWorkoutsBatchAsync(int userId, List<WorkoutDto> dtos, CancellationToken ct = default)
+        {
+            var response = new WorkoutBatchSyncResponse();
 
+            foreach (var dto in dtos)
+            {
+                try
+                {
+                    var strategy = _context.Database.CreateExecutionStrategy();
+
+                    await strategy.ExecuteAsync(async () =>
+                    {
+                        await using IDbContextTransaction transaction = await _context.Database.BeginTransactionAsync(ct);
+
+                        try
+                        {
+                            var workoutId = await SyncWorkoutAsync(userId, dto, ct);
+                            await transaction.CommitAsync(ct);
+
+                            response.SyncedIds.Add(workoutId);
+                            response.Synced++;
+                        }
+                        catch
+                        {
+                            await transaction.RollbackAsync(ct);
+                            throw;
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    //Очищение ChangeTracker
+                    _context.ChangeTracker.Clear();
+
+                    response.Errors.Add(new BatchSyncError()
+                    {
+                        Identifer = dto.Identifier ?? "<null>",
+                        Error = ex.Message
+                    });
+                    response.Failed++;
+
+                    _logger.LogWarning(ex, "Ошибка синхронизации тренировки {Identifier} пользователя {UserId}", dto.Identifier, userId);
+                }
+            }
+
+            _logger.LogInformation("BatchSync завершен для пользовтеля {UserId}: {Synced} успешно, {Failed} с ошибками", userId, response.Synced, response.Failed);
+
+            return response;
+        }
         public async Task<bool> IsWorkoutExistAsync(string identifier, CancellationToken ct = default)
         {
             Console.WriteLine(_context.Workouts.Count());

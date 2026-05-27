@@ -17,6 +17,8 @@ namespace Client.Services
         IOptions<ApiSettings> options,
         LocalDataBaseContext dbContext) : IWorkoutSyncService
     {
+        private const int BatchSizeMax = 50;
+
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -91,7 +93,108 @@ namespace Client.Services
             return syncedCount;
         }
 
-        private SyncWorkoutRequest MapToRequest(Workout workout)
+        public async Task<BatchSyncResult> SyncAllUnsyncedBatchAsync(CancellationToken ct = default)
+        {
+            var unsyncedWorkouts = await _dbContext.Workouts
+                .Include(w => w.Device)
+                .Include(w => w.Laps)
+                .Include(w => w.WorkoutSamples)
+                .Where(w => !w.IsSynced)
+                .ToListAsync(ct);
+
+            if (unsyncedWorkouts.Count == 0)
+                return new BatchSyncResult(0, 0, 0, new List<BatchSyncError>());
+
+            var totalSynced = 0;
+            var totalFailed = 0;
+            var allErrors = new List<BatchSyncError>();
+            var syncedEntities = new List<Workout>();
+
+            var chunks = unsyncedWorkouts
+                .Select((w, i) => new { Workout = w, Index = i })
+                .GroupBy(x => x.Index / BatchSizeMax)
+                .Select(g => g.Select(x => x.Workout).ToList())
+                .ToList();
+
+            foreach (var chunk in chunks)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var request = new BatchSyncWorkoutsRequest()
+                {
+                    Workouts = chunk.Select(x => MapToRequest(x)).ToList()
+                };
+
+                BatchSyncWorkoutsResponse? response = null;
+                try
+                {
+                    response = await SendBatchAsync(request, ct);
+                }
+                catch (HttpRequestException ex)
+                {
+                    allErrors.Add(new BatchSyncError()
+                    {
+                        Identifier = "<network>",
+                        Error = $"Сетевая ошибка: {ex.Message}"
+                    });
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    throw;
+                }
+
+                if (response == null)
+                    continue;
+
+                var failedIdentifiers = new HashSet<string>(response.Errors.Select(e => e.Identifier));
+
+                foreach (var workout in chunk)
+                {
+                    if (failedIdentifiers.Contains(workout.Identifier))
+                        totalFailed++;
+                    else
+                    {
+                        workout.IsSynced = true;
+                        workout.LastSyncedAt = DateTime.UtcNow;
+                        syncedEntities.Add(workout);
+                        totalSynced++;
+                    }
+                }
+
+                allErrors.AddRange(response.Errors);
+            }
+
+            if (syncedEntities.Count != 0)
+                await _dbContext.SaveChangesAsync(ct);
+
+            return new BatchSyncResult(
+                TotalProcessed: totalSynced + totalFailed,
+                TotalSynced: totalSynced,
+                TotalFailed: totalFailed,
+                Errors: allErrors);
+        }
+
+        private async Task<BatchSyncWorkoutsResponse?> SendBatchAsync(BatchSyncWorkoutsRequest request, CancellationToken ct)
+        {
+            var response = await _httpClient.PostAsJsonAsync($"{_settings.BaseUrl}/workouts/sync/batch",
+                request,
+                JsonOptions,
+                ct);
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                throw new UnauthorizedAccessException("Токен истек. Войдите заново");
+
+            if (response.StatusCode is System.Net.HttpStatusCode.OK 
+                or System.Net.HttpStatusCode.MultiStatus
+                or System.Net.HttpStatusCode.BadRequest)
+            {
+                return await response.Content.ReadFromJsonAsync<BatchSyncWorkoutsResponse>(JsonOptions, ct);
+            }
+
+            response.EnsureSuccessStatusCode();
+            return null;
+        }
+
+        private static SyncWorkoutRequest MapToRequest(Workout workout)
         {
             SyncWorkoutRequest request = new()
             {

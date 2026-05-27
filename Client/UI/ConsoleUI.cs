@@ -253,9 +253,34 @@ namespace Client.UI
             try
             {
                 ShowMessage("Отправка несинхронизированных тренировок...");
-                var count = await syncService.SyncAllUnsyncedAsync(ct);
+                var result = await syncService.SyncAllUnsyncedBatchAsync(ct);
 
-                ShowMessage($"\nСинхронизировано: {count} тренировок");
+                if (result.TotalProcessed == 0)
+                {
+                    ShowMessage("\nНет тренировок для отправки");
+                    WaitForContinue();
+                    return;
+                }
+
+                Console.WriteLine();
+                ShowMessage(new string('=', 40));
+                ShowMessage($"Успешно отправлено: {result.TotalSynced}");
+
+                if (result.TotalFailed > 0)
+                {
+                    ShowError($"Ошибок: {result.TotalFailed}");
+                    Console.WriteLine();
+                    Console.WriteLine("Детали ошибок:");
+                    foreach (var err in result.Errors.Take(10))
+                    {
+                        ShowError($"\t[{err.Identifier} {err.Error}]");
+                    }
+
+                    if (result.Errors.Count > 10)
+                        Console.WriteLine($" ... и еще {result.Errors.Count - 10}");
+                }
+
+                ShowMessage(new string('=', 40));
             }
             catch (UnauthorizedAccessException)
             {
@@ -292,7 +317,7 @@ namespace Client.UI
 
             try
             {
-                var request = new PersonalReportRequest(from.Date, to.Date.AddDays(1).AddSeconds(-1));
+                var request = new PersonalReportRequest(DateTime.SpecifyKind(from, DateTimeKind.Utc), DateTime.SpecifyKind(to, DateTimeKind.Utc).AddDays(1).AddSeconds(-1));
                 var report = await reportService.GetPersonalReportAsync(request, ct);
 
                 Console.WriteLine();
