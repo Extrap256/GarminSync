@@ -13,6 +13,8 @@ namespace Server.Core.Services
 
         public async Task<string> GetUserReportAsync(int userId, DateTime from, DateTime to, CancellationToken ct)
         {
+            from = EnsureUtc(from);
+            to = EnsureUtc(to);
             var workouts = await _context.Workouts
                 .Include(w => w.Device)
                 .ThenInclude(d => d!.User)
@@ -36,8 +38,20 @@ namespace Server.Core.Services
             return sb.ToString();
         }
 
+        private static DateTime EnsureUtc(DateTime dt)
+        {
+            return dt.Kind switch
+            {
+                DateTimeKind.Utc => dt,
+                DateTimeKind.Local => dt.ToUniversalTime(),
+                _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc) // Unspecified → считаем UTC
+            };
+        }
+
         public async Task<string> GetGroupReportAsync(int groupId, DateTime from, DateTime to, CancellationToken ct = default)
         {
+            from = EnsureUtc(from);
+            to = EnsureUtc(to);
             Group group = _context.Groups
                 .Include(g => g.Members)
                 .FirstOrDefault(g => g.GroupId == groupId) ?? throw new NotFoundException("Группа не найдена");

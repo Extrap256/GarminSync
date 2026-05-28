@@ -1,4 +1,5 @@
-﻿using EntityClassLibraryServer.Models;
+﻿using System.Data;
+using EntityClassLibraryServer.Models;
 using Microsoft.EntityFrameworkCore;
 using Server.API.Models.Group;
 using Server.Common.Exceptions;
@@ -11,6 +12,35 @@ namespace Server.Core.Services
     {
         private readonly ApplicationDbContext _context = context;
 
+        public async Task<string?> GetUserRoleInGroupAsync(int groupId, int userId, CancellationToken ct = default)
+        {
+            var groupe = await _context.Groups
+                .Include(g => g.Trainers)
+                .Include(g => g.Members)
+                .FirstOrDefaultAsync(m => m.GroupId == groupId, ct);
+            if (groupe == null)
+                throw new NotFoundException("Группа с таким ID не найдена");
+
+            string? role = null;
+
+            if (groupe.Trainers.Any(t => t.UserId == userId))
+                role = "trainer";
+            if (groupe.Members.Any(t => t.UserId == userId))
+                role = "member";
+
+            return role;
+        }
+
+        public async Task<bool> IsUserInGroupAsync(int groupId, int userId, CancellationToken ct = default)
+        {
+            var groupe = await _context.Groups
+                .Include(g => g.Members)
+                .FirstOrDefaultAsync(m => m.GroupId == groupId, ct);
+            if (groupe == null)
+                throw new NotFoundException("Группа с таким ID не найдена");
+
+            return groupe.Members.Any(t => t.UserId == userId);
+        }
         public async Task<Group> CreateGroupAsync(int creatorUserId, CreateGroupDto dto, CancellationToken ct = default)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == creatorUserId, ct) ?? throw new NotFoundException("Создатель группы не найден");
@@ -25,6 +55,7 @@ namespace Server.Core.Services
             };
 
             _context.Groups.Add(group);
+            user.TrainedGroups.Add(group);
             await _context.SaveChangesAsync(ct);
 
             return group;
@@ -37,6 +68,7 @@ namespace Server.Core.Services
             Group group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupId == groupId, ct) ?? throw new NotFoundException("Группа не найдена");
 
             group.Members.Add(memberUser);
+            memberUser.Groups.Add(group);
 
             await _context.SaveChangesAsync(ct);
         }
@@ -47,6 +79,7 @@ namespace Server.Core.Services
             Group group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupId == groupId, ct) ?? throw new NotFoundException("Группа не найдена");
 
             group.Trainers.Add(trainerUser);
+            trainerUser.TrainedGroups.Add(group);
 
             await _context.SaveChangesAsync(ct);
         }

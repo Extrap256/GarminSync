@@ -9,5 +9,7 @@ namespace Server.Core.Interfaces
         Task AddMemberToGroupAsync(int groupId, string memberLogin, CancellationToken ct = default);
         Task AddTrainerToGroupAsync(int groupId, string trainerLogin, CancellationToken ct = default);
         Task<List<Group>> GetUserGroupsAsync(int userId, CancellationToken ct = default);
+        Task<string?> GetUserRoleInGroupAsync(int groupId, int userId, CancellationToken ct = default);
+        Task<bool> IsUserInGroupAsync(int groupId, int userId, CancellationToken ct = default);
     }
 }

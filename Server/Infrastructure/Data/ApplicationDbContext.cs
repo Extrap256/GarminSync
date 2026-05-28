@@ -23,7 +23,6 @@ namespace Server.Infrastructure.Data
         public DbSet<LapRunning> LapRunnings { get; set; } = null!;
         public DbSet<LapOther> LapSkiings { get; set; } = null!;
 
-        public DbSet<VkUserBinding> VkUserBindings {  get; set; } = null!;
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -93,12 +92,6 @@ namespace Server.Infrastructure.Data
                 .HasValue<WorkoutSamplesRunning>("WorkoutSamplesRunning")
                 .HasValue<WorkoutSamplesCycling>("WorkoutSamplesCycling")
                 .HasValue<WorkoutSamplesOther>("WorkoutSamplesOther");
-
-            modelBuilder.Entity<VkUserBinding>()
-                .HasOne(b => b.User)
-                .WithMany()
-                .HasForeignKey(b => b.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -1,13 +1,21 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using Server.API.Endpoints;
+using Server.Bot.Endpoints;
+using Server.Bot.Vk;
+using Server.Bot.Vk.Commands;
+using Server.Bot.Vk.Session;
 using Server.Common.Exceptions;
 using Server.Core.Interfaces;
 using Server.Core.Services;
 using Server.Infrastructure.Data;
+using VkNet;
+using VkNet.Abstractions;
+using VkNet.Model;
 
 var builder = WebApplication.CreateBuilder();
 
@@ -57,7 +65,32 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
             errorCodesToAdd: null);
     }));
 
+// VK BOT
+builder.Services.Configure<VkBotOptions>(builder.Configuration.GetSection(VkBotOptions.SectionName));
 
+builder.Services.AddSingleton<IVkApi>(sp =>
+{
+    var opts = sp.GetRequiredService<IOptions<VkBotOptions>>().Value;
+    var api = new VkApi();
+    api.Authorize(new ApiAuthParams { AccessToken = opts.AccessToken });
+    return api;
+});
+builder.Services.AddSingleton<BotSessionStore>();
+
+builder.Services.AddScoped<IVkMessageSender, VkMessageSender>();
+
+builder.Services.AddScoped<VkBotService>();
+
+builder.Services.AddScoped<IBotCommand, StartCommand>();
+builder.Services.AddScoped<IBotCommand, RegisterCommand>();
+builder.Services.AddScoped<IBotCommand, LoginCommand>();
+builder.Services.AddScoped<IBotCommand, LogoutCommand>();
+builder.Services.AddScoped<IBotCommand, ReportCommand>();
+builder.Services.AddScoped<IBotCommand, ProfileCommand>();
+builder.Services.AddScoped<IBotCommand, WorkoutCommand>();
+builder.Services.AddScoped<IBotCommand, GroupCommand>();
+
+//Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IWorkoutSyncService, WorkoutSyncService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -107,10 +140,10 @@ app.Use(async (context, next) =>
 });
 
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseHttpsRedirection();
+//}
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -120,5 +153,6 @@ app.MapWorkoutEndpoints();
 app.MapUserEndpoints();
 app.MapGroupEndpoints();
 app.MapReportEndpoints();
+app.MapVkBotEndpoints();
 
 app.Run();
