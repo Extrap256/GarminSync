@@ -2,6 +2,8 @@
 using Client.Core.Interfaces.DTO;
 using Client.Infrastructure.Storage;
 using EntityClassLibraryClient.Models;
+using MediaDevices;
+
 
 namespace Client.Services
 {
@@ -20,27 +22,38 @@ namespace Client.Services
 
         public async Task<SyncResult> RunAsync(DeviceInfo deviceInfo, CancellationToken ct = default)
         {
-            string activitiesFolderPath = deviceInfo.ActivitiesPath;
+            if (deviceInfo == null)
+                throw new ArgumentNullException(nameof(deviceInfo));
 
-            if (!Directory.Exists(activitiesFolderPath))
-                throw new DirectoryNotFoundException(activitiesFolderPath);
+            if (deviceInfo.IsMtpDevice && deviceInfo.MtpDevice != null)
+                deviceInfo.MtpDevice.Connect();
 
-            var fitsFilesPaths = Directory.GetFiles(activitiesFolderPath, "*.fit", SearchOption.TopDirectoryOnly);
+            IReadOnlyList<string> fitFiles;
 
-            if (fitsFilesPaths.Length == 0)
+            if (deviceInfo.IsMtpDevice && deviceInfo.MtpDevice != null)
             {
-                _ui.ShowMessage("Файлы не найдены");
-                return new SyncResult(0, 0, []);
+                fitFiles = await GetMtpFitFilesAsync(deviceInfo, ct);
             }
-            DeviceData deviceData = await _fitParser.ParseDeviceAsync(deviceInfo.DeviceInfoPath, ct);
+            else
+            {
+                fitFiles = Directory.GetFiles(deviceInfo.ActivitiesPath, "*.fit", SearchOption.TopDirectoryOnly);
+            }
 
-            _ui.ShowMessage($"Найдено файлов: {fitsFilesPaths.Length}");
+            if (fitFiles.Count == 0)
+            {
+                _ui.ShowMessage("Файлы .fit не найдены");
+                return new SyncResult(0, 0, Array.Empty<string>());
+            }
+
+            _ui.ShowMessage($"Найдено файлов: {fitFiles.Count}");
+
+            DeviceData deviceData = await _fitParser.ParseDeviceAsync(deviceInfo.DeviceInfoPath, deviceInfo, ct);
 
             int processed = 0;
             int skipped = 0;
             List<string> errors = new();
 
-            for (int i = 0; i < fitsFilesPaths.Length; i++)
+            for (int i = 0; i < fitFiles.Count; i++)
             {
                 if (ct.IsCancellationRequested)
                 {
@@ -48,18 +61,26 @@ namespace Client.Services
                     break;
                 }
 
-                string filePath = fitsFilesPaths[i];
-                string fileName = Path.GetFileName(filePath);
+                string filePath = fitFiles[i];
 
                 try
                 {
-                    _ui.ShowProgress(fileName, i + 1, fitsFilesPaths.Length);
+                    _ui.ShowProgress(filePath, i + 1, fitFiles.Count);
 
-                    FitDataCollector dto = await _fitParser.ParseActivityAsync(filePath, ct);
+                    FitDataCollector dto;
+
+                    if (deviceInfo.IsMtpDevice && deviceInfo.MtpDevice != null)
+                    {
+                        dto = await _fitParser.ParseActivityAsync(filePath, deviceInfo, ct);
+                    }
+                    else
+                    {
+                        dto = await _fitParser.ParseActivityAsync(filePath, ct: ct);
+                    }
 
                     string identifier = dto.GetIdentifier();
 
-                    if (await _localRepository.ExistByIdentifierAsync(identifier ,ct))
+                    if (await _localRepository.ExistByIdentifierAsync(identifier, ct))
                     {
                         skipped++;
                         continue;
@@ -78,9 +99,10 @@ namespace Client.Services
                 }
                 catch (Exception ex)
                 {
-                    errors.Add($"{fileName}: {ex.Message}_{ex.InnerException?.Message}");
+                    errors.Add($"{filePath}: {ex.Message}_{ex.InnerException?.Message}");
                 }
             }
+
 
             if (processed > 0)
             {
@@ -95,7 +117,34 @@ namespace Client.Services
                 }
             }
 
+            if (deviceInfo.IsMtpDevice && deviceInfo.MtpDevice != null)
+            {
+                deviceInfo.MtpDevice.Disconnect();
+                deviceInfo.MtpDevice.Dispose();
+            }
             return new SyncResult(processed, skipped, errors);
+        }
+
+        private static async Task<IReadOnlyList<string>> GetMtpFitFilesAsync(
+            DeviceInfo deviceInfo,
+            CancellationToken ct)
+        {
+            var files = new List<string>();
+
+            if (deviceInfo.MtpDevice == null)
+                throw new InvalidOperationException("MTP-устройство не подключено");
+
+            try
+            {
+                var root = deviceInfo.MtpDevice.GetRootDirectory();
+                files = deviceInfo.MtpDevice.GetFiles(deviceInfo.ActivitiesPath, ".fit").ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Ошибка чтения MTP-устройства: {ex.Message}", ex);
+            }
+
+            return files;
         }
     }
 }

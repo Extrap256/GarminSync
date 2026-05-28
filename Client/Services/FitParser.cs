@@ -1,52 +1,207 @@
 ﻿using Client.Core.Interfaces;
 using Client.Core.Interfaces.DTO;
 using Dynastream.Fit;
+using MediaDevices;
 
 namespace Client.Services
 {
     public class FitParser : IFitParser
     {
-        public Task<FitDataCollector> ParseActivityAsync(string filePath, CancellationToken token = default)
+        public Task<FitDataCollector> ParseActivityAsync(string filePath, DeviceInfo? deviceInfo = null, CancellationToken ct = default)
         {
-            token.ThrowIfCancellationRequested();
+            ct.ThrowIfCancellationRequested();
 
-            var fileInfo = new FileInfo(filePath);
+            var collector = new FitDataCollector();
 
-            if (!fileInfo.Exists)
-                throw new FileNotFoundException(filePath);
+            if (deviceInfo?.IsMtpDevice == true && deviceInfo.MtpDevice != null)
+            {
+                ParseFromMtp(deviceInfo.MtpDevice, filePath, collector);
+            }
+            else
+            {
+                ParseFromFile(filePath, collector);
+            }
 
-            Decode decoder = new();
-            MesgBroadcaster broadcaster = new();
-            FitDataCollector fitDataCollector = new();
+            return Task.FromResult(collector);
+        }
+
+        private static void ParseFromFile(string filePath, FitDataCollector collector)
+        {
+            if (!System.IO.File.Exists(filePath))
+                throw new FileNotFoundException($"Файл не найден: {filePath}");
+
+            var decoder = new Decode();
+            var broadcaster = new MesgBroadcaster();
 
             decoder.MesgEvent += broadcaster.OnMesg;
             decoder.MesgDefinitionEvent += broadcaster.OnMesgDefinition;
 
-            broadcaster.ActivityMesgEvent += (s, e) => OnActivityMesg(e, fitDataCollector);
-            //broadcaster.DeviceInfoMesgEvent += (s, e) => OnDeviceInfoMesg(e, fitDataCollector);
-            //broadcaster.EventMesgEvent += (s, e) => OnEventMesg(e, fitDataCollector);
-            broadcaster.FileIdMesgEvent += (s, e) => OnFileIdMesg(e, fitDataCollector);
-            broadcaster.SessionMesgEvent += (s, e) => OnSessionMesg(e, fitDataCollector);
-            broadcaster.RecordMesgEvent += (s, e) => OnRecordMesg(e, fitDataCollector);
-            broadcaster.LapMesgEvent += (s, e) => OnLapMesg(e, fitDataCollector);
+            SubscribeToEvents(broadcaster, collector);
 
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+            if (!decoder.Read(stream))
+                throw new InvalidDataException($"Невалидный FIT-файл: {filePath}");
+        }
+        private static void ParseFromMtp(MediaDevice device, string mtpPath, FitDataCollector collector)
+        {
+            if (!device.IsConnected)
+                throw new NotConnectedException("Устройство MTR не подключено");
+
+            var decoder = new Decode();
+            var broadcaster = new MesgBroadcaster();
+
+            decoder.MesgEvent += broadcaster.OnMesg;
+            decoder.MesgDefinitionEvent += broadcaster.OnMesgDefinition;
+
+            SubscribeToEvents(broadcaster, collector);
+
+            // Конвертируем путь из "MTP://Garmin/GARMIN/Activities/file.fit" в "/GARMIN/Activities/file.fit"
+            //var relativePath = ConvertMtpPath(mtpPath);
+            var relativePath = mtpPath;
             try
             {
-                using var stream = new FileStream(filePath, FileMode.Open);
+                // Читаем файл в MemoryStream
+                using var memoryStream = new MemoryStream();
+                using (var mtpStream = device.OpenReadFromPersistentUniqueId(device.GetFileInfo(relativePath).PersistentUniqueId))
+                {
+                    mtpStream.CopyTo(memoryStream);
+                }
 
-                decoder.Read(stream);
+                // Сбрасываем позицию для чтения
+                memoryStream.Position = 0;
 
-                return Task.FromResult(fitDataCollector);
+                // Парсим из памяти
+                if (!decoder.Read(memoryStream))
+                    throw new InvalidDataException($"Невалидный FIT-файл: {mtpPath}");
             }
             catch (Exception ex)
             {
-                throw new InvalidDataException($"Ошибка парсинга FIT-файла: {filePath}", ex);
+                throw new InvalidOperationException($"Ошибка чтения MTP-файла: {ex.Message}", ex);
             }
         }
-        public Task<DeviceData> ParseDeviceAsync(string filePath, CancellationToken ct = default)
+
+        private static string ConvertMtpPath(string fullPath)
+        {
+            // Вход: "MTP://Garmin Forerunner 945/GARMIN/Activities/2024-05-01.fit"
+            // Выход: "/GARMIN/Activities/2024-05-01.fit"
+
+            var parts = fullPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 3)
+                throw new ArgumentException($"Некорректный MTP-путь: {fullPath}");
+
+            // Пропускаем "MTP:" и название устройства
+            var relativePath = "/" + string.Join("/", parts.Skip(1));
+            return relativePath;
+        }
+
+        private static void SubscribeToEvents(MesgBroadcaster broadcaster, FitDataCollector collector)
+        {
+            broadcaster.ActivityMesgEvent += (s, e) => OnActivityMesg(e, collector);
+            //broadcaster.DeviceInfoMesgEvent += (s, e) => OnDeviceInfoMesg(e, collector);
+            //broadcaster.EventMesgEvent += (s, e) => OnEventMesg(e, collector);
+            broadcaster.FileIdMesgEvent += (s, e) => OnFileIdMesg(e, collector);
+            broadcaster.SessionMesgEvent += (s, e) => OnSessionMesg(e, collector);
+            broadcaster.RecordMesgEvent += (s, e) => OnRecordMesg(e, collector);
+            broadcaster.LapMesgEvent += (s, e) => OnLapMesg(e, collector);
+        }
+
+        //public Task<FitDataCollector> ParseActivityAsync(string filePath, CancellationToken token = default)
+        //{
+        //    token.ThrowIfCancellationRequested();
+
+        //    var fileInfo = new FileInfo(filePath);
+
+        //    if (!fileInfo.Exists)
+        //        throw new FileNotFoundException(filePath);
+
+        //    Decode decoder = new();
+        //    MesgBroadcaster broadcaster = new();
+        //    FitDataCollector fitDataCollector = new();
+
+        //    decoder.MesgEvent += broadcaster.OnMesg;
+        //    decoder.MesgDefinitionEvent += broadcaster.OnMesgDefinition;
+
+        //    broadcaster.ActivityMesgEvent += (s, e) => OnActivityMesg(e, fitDataCollector);
+        //    //broadcaster.DeviceInfoMesgEvent += (s, e) => OnDeviceInfoMesg(e, fitDataCollector);
+        //    //broadcaster.EventMesgEvent += (s, e) => OnEventMesg(e, fitDataCollector);
+        //    broadcaster.FileIdMesgEvent += (s, e) => OnFileIdMesg(e, fitDataCollector);
+        //    broadcaster.SessionMesgEvent += (s, e) => OnSessionMesg(e, fitDataCollector);
+        //    broadcaster.RecordMesgEvent += (s, e) => OnRecordMesg(e, fitDataCollector);
+        //    broadcaster.LapMesgEvent += (s, e) => OnLapMesg(e, fitDataCollector);
+
+        //    try
+        //    {
+        //        using var stream = new FileStream(filePath, FileMode.Open);
+
+        //        decoder.Read(stream);
+
+        //        return Task.FromResult(fitDataCollector);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw new InvalidDataException($"Ошибка парсинга FIT-файла: {filePath}", ex);
+        //    }
+        //}
+        public Task<DeviceData> ParseDeviceAsync(string filePath, DeviceInfo? deviceInfo = null, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
 
+            var deviceData = new DeviceData();
+
+            if (deviceInfo?.IsMtpDevice == true && deviceInfo.MtpDevice != null)
+            {
+                ParseDeviceFromMtp(deviceInfo.MtpDevice, filePath, deviceData);
+            }
+            else
+            {
+                ParseDeviceFromFile(filePath, deviceData);
+            }
+
+            return Task.FromResult(deviceData);
+        }
+        private static void ParseDeviceFromMtp(MediaDevice device, string filePath, DeviceData deviceData)
+        {
+            if (!device.IsConnected)
+                throw new NotConnectedException("Устройство MTR не подключено");
+
+            var decoder = new Decode();
+            var broadcaster = new MesgBroadcaster();
+
+            decoder.MesgEvent += broadcaster.OnMesg;
+            decoder.MesgDefinitionEvent += broadcaster.OnMesgDefinition;
+
+            broadcaster.DeviceInfoMesgEvent += (s, e) => OnFileIdMesg(e, deviceData);
+
+            // Конвертируем путь из "MTP://Garmin/GARMIN/Activities/file.fit" в "/GARMIN/Activities/file.fit"
+            //var relativePath = ConvertMtpPath(filePath);
+            var relativePath = filePath;
+            try
+            {
+                // Читаем файл в MemoryStream
+                using var memoryStream = new MemoryStream();
+                using (var mtpStream = device.OpenReadFromPersistentUniqueId(device.GetFileInfo(relativePath).PersistentUniqueId))
+                {
+                    if (!decoder.Read(memoryStream))
+                        throw new InvalidDataException($"Невалидный FIT-файл: {filePath}");
+                    //mtpStream.CopyTo(memoryStream);
+                }
+
+                // Сбрасываем позицию для чтения
+                //memoryStream.Position = 0;
+
+
+
+                // Парсим из памяти
+                
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Ошибка чтения MTP-файла: {ex.Message}", ex);
+            }
+        }
+        private static void ParseDeviceFromFile(string filePath, DeviceData deviceData)
+        {
             var fileInfo = new FileInfo(filePath);
 
             if (!fileInfo.Exists)
@@ -54,7 +209,6 @@ namespace Client.Services
 
             Decode decoder = new();
             MesgBroadcaster broadcaster = new();
-            DeviceData deviceData = new();
 
             decoder.MesgEvent += broadcaster.OnMesg;
             decoder.MesgDefinitionEvent += broadcaster.OnMesgDefinition;
@@ -67,14 +221,13 @@ namespace Client.Services
 
                 decoder.Read(stream);
 
-                return Task.FromResult(deviceData);
+                return;
             }
             catch (Exception ex)
             {
                 throw new InvalidDataException($"Ошибка парсинга FIT-файла: {filePath}", ex);
             }
         }
-
         static private void OnLapMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
         {
             var msg = e.mesg as LapMesg;
@@ -92,21 +245,21 @@ namespace Client.Services
 
             fitDataCollector.LapDataCollections.Add(lap);
         }
-        static public void OnFileIdMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
+        static private void OnFileIdMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
         {
             var msg = e.mesg as FileIdMesg;
 
             fitDataCollector.DeviceData.SerialNumber = msg?.GetSerialNumber() ?? throw new Exception("Отсутствует SerialNumber");
             fitDataCollector.DeviceData.Product = msg?.GetProduct();
         }
-        static public void OnFileIdMesg(MesgEventArgs e, DeviceData deviceData)
+        static private void OnFileIdMesg(MesgEventArgs e, DeviceData deviceData)
         {
             var msg = e.mesg as FileIdMesg;
 
             deviceData.SerialNumber = msg?.GetSerialNumber() ?? throw new Exception("Отсутствует SerialNumber");
             deviceData.Product = msg?.GetProduct();
         }
-        static public void OnSessionMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
+        static private void OnSessionMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
         {
             var msg = e.mesg as SessionMesg;
 
@@ -129,7 +282,7 @@ namespace Client.Services
             fitDataCollector.AvgCadence = msg?.GetAvgCadence();
             fitDataCollector.StyleOfSkiing = msg?.GetSubSport() == SubSport.SkateSkiing ? FitDataCollector.SkiStyle.Skate : FitDataCollector.SkiStyle.Classic;
         }
-        static public void OnRecordMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
+        static private void OnRecordMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
         {
             var msg = e.mesg as RecordMesg;
 
@@ -148,16 +301,16 @@ namespace Client.Services
 
             fitDataCollector.RecordDataCollections.Add(record);
         }
-        static public void OnEventMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
+        static private void OnEventMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
         {
             // Нечего
         }
-        static public void OnDeviceInfoMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
+        static private void OnDeviceInfoMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
         {
             // нечего
         }
         
-        static public void OnActivityMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
+        static private void OnActivityMesg(MesgEventArgs e, FitDataCollector fitDataCollector)
         {
             var msg = new ActivityMesg(e.mesg);
 

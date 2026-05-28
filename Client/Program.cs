@@ -339,7 +339,6 @@ namespace Client
             ui.ShowMessage($"\nЗапуск синхронизации: {selected.Label}");
             ui.ShowMessage($"Путь: {selected.ActivitiesPath}\n");
 
-
             var result = await orchestrator.RunAsync(selected, ct);
 
             // Вывод итогов
