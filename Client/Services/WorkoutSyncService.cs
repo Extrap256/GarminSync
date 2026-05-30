@@ -17,7 +17,7 @@ namespace Client.Services
         IOptions<ApiSettings> options,
         LocalDataBaseContext dbContext) : IWorkoutSyncService
     {
-        private const int BatchSizeMax = 50;
+        private const int BatchSizeMax = 60;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {

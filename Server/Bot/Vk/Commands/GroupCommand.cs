@@ -269,8 +269,8 @@ namespace Server.Bot.Vk.Commands
                 return;
             }
 
-            // Проверка: пользователь должен быть в группе
-            if (!await _groupService.IsUserInGroupAsync(groupId, userId))
+            // Проверка: пользователь должен быть тренером в группе
+            if (!await _groupService.IsUserInGroupAsTrainerAsync(groupId, userId))
             {
                 await _messageSender.SendMessageAsync(vkUserId,
                     "Ты не состоишь в этой группе");

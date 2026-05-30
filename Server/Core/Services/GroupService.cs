@@ -41,6 +41,17 @@ namespace Server.Core.Services
 
             return groupe.Members.Any(t => t.UserId == userId);
         }
+        public async Task<bool> IsUserInGroupAsTrainerAsync(int groupId, int userId, CancellationToken ct = default)
+        {
+            var groupe = await _context.Groups
+                .Include(g => g.Trainers)
+                .FirstOrDefaultAsync(m => m.GroupId == groupId, ct);
+            if (groupe == null)
+                throw new NotFoundException("Группа с таким ID не найдена");
+
+            return groupe.Trainers.Any(t => t.UserId == userId);
+        }
+
         public async Task<Group> CreateGroupAsync(int creatorUserId, CreateGroupDto dto, CancellationToken ct = default)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == creatorUserId, ct) ?? throw new NotFoundException("Создатель группы не найден");

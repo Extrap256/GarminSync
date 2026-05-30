@@ -11,5 +11,6 @@ namespace Server.Core.Interfaces
         Task<List<Group>> GetUserGroupsAsync(int userId, CancellationToken ct = default);
         Task<string?> GetUserRoleInGroupAsync(int groupId, int userId, CancellationToken ct = default);
         Task<bool> IsUserInGroupAsync(int groupId, int userId, CancellationToken ct = default);
+        Task<bool> IsUserInGroupAsTrainerAsync(int groupId, int userId, CancellationToken ct = default);
     }
 }

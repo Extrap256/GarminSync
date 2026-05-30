@@ -96,6 +96,7 @@ namespace Client
             services.AddHttpClient("GarminApi", client =>
             {
                 client.BaseAddress = new Uri(baseUrl);
+                client.Timeout = TimeSpan.FromMinutes(3);
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             }).AddHttpMessageHandler<AuthHeaderHandler>();
 
