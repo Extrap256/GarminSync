@@ -7,6 +7,5 @@ namespace Server.Core.Interfaces
     {
         Task<UserInfoDto> GetUserInfoAsync(int userId, CancellationToken ct = default);
         Task UpdateUserInfoAsync(int userId, UserUpdateDto dto, CancellationToken ct = default);
-        // Можно добавить удаление
     }
 }

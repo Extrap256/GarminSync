@@ -69,7 +69,7 @@ namespace Server.Bot.Endpoints
                     context.Response.ContentType = "text/plain; charset=utf-8";
                     context.Response.StatusCode = 200;
                     await context.Response.WriteAsync(code);
-                    return Results.Empty;  // Тело уже записано вручную
+                    return Results.Empty;
                 }
 
                 // === 5. Проверка secret_key для остальных событий ===

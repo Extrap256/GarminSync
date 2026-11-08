@@ -44,7 +44,7 @@ namespace Server.Core.Services
             {
                 DateTimeKind.Utc => dt,
                 DateTimeKind.Local => dt.ToUniversalTime(),
-                _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc) // Unspecified → считаем UTC
+                _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc)
             };
         }
 

@@ -6,8 +6,6 @@ namespace Client.Services
 {
     public class DeviceScanner(string activitiesPath = "GARMIN\\ACTIVITY", string deviceInfoPath = "GARMIN\\Device.fit") : IDeviceScanner
     {
-
-        //private readonly IAppUI _ui = ui;
         private readonly string _activityPath = activitiesPath;
         private readonly string _deviceInfoPath = deviceInfoPath;
 

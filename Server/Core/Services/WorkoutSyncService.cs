@@ -20,7 +20,6 @@ namespace Server.Core.Services
             var devices = await _context.Devices
                 .Where(d => d.UserId == userId)
                 .ToListAsync(ct);
-            // Include()
 
             var existingIds = await _context.Workouts
                 .Where(w => w.Identifier == dto.Identifier)

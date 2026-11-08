@@ -11,7 +11,7 @@ namespace Server.Bot.Vk.Commands
     {
         private readonly IVkMessageSender _messageSender;
         private readonly ApplicationDbContext _context;
-        private readonly IVkApi _vkApi;  // ← Добавили
+        private readonly IVkApi _vkApi;
         private readonly ILogger<RegisterCommand> _logger;
 
         public RegisterCommand(

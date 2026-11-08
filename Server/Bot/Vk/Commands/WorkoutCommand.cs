@@ -35,7 +35,7 @@ namespace Server.Bot.Vk.Commands
             var user = await _context.Users.FirstOrDefaultAsync(u => u.VkId == vkUserId);
             if (user == null)
             {
-                await _messageSender.SendMessageAsync(vkUserId, "⚠️ Сначала войди: /login");
+                await _messageSender.SendMessageAsync(vkUserId, "Сначала войди: /login");
                 return;
             }
 

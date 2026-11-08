@@ -5,7 +5,6 @@ namespace Client.Infrastructure.Storage
 {
     public class LocalDataBaseContext : DbContext
     {
-        //public DbSet<User> Users { get; set; } = null!;
         public DbSet<Device> Devices { get; set; } = null!;
         public DbSet<Workout> Workouts { get; set; } = null!;
         public DbSet<WorkoutRunning> WorkoutRunnings { get; set; } = null!;
@@ -58,7 +57,7 @@ namespace Client.Infrastructure.Storage
                 .HasDiscriminator<string>("SampleType")
                 //.HasValue<WorkoutSamples>("BaseSample")
                 .HasValue<WorkoutSamplesRunning>("WorkoutSamplesRunning")
-                .HasValue<WorkoutSamplesCycling>("WorkoutSamplesCicling") // Обрати внимание на опечатку в твоём названии
+                .HasValue<WorkoutSamplesCycling>("WorkoutSamplesCyclings")
                 .HasValue<WorkoutSamplesOther>("WorkoutSamplesOther");
         }
     }

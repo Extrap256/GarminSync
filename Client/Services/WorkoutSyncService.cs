@@ -53,42 +53,6 @@ namespace Client.Services
             return result ?? throw new InvalidOperationException("Пустой ответ");
         }
 
-        public async Task<int> SyncAllUnsyncedAsync(CancellationToken ct = default)
-        {
-            var unsyncedWorkouts = await _dbContext.Workouts
-                .Include(w => w.Device)
-                .Include(w => w.Laps)
-                .Include(w => w.WorkoutSamples)
-                .Where(w => !w.IsSynced)
-                .ToListAsync(ct);
-
-            if (unsyncedWorkouts.Count == 0)
-                return 0;
-
-            int syncedCount = 0;
-
-            foreach (var workout in unsyncedWorkouts)
-            {
-                try
-                {
-                    var request = MapToRequest(workout);
-                    await SyncWorkoutAsync(request, ct);
-
-                    workout.IsSynced = true;
-                    workout.LastSyncedAt = DateTime.UtcNow;
-                    syncedCount++;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Ошибка синхронизации {workout.Identifier}: {ex.Message}");
-
-                }
-            }
-
-            await _dbContext.SaveChangesAsync(ct);
-
-            return syncedCount;
-        }
 
         public async Task<BatchSyncResult> SyncAllUnsyncedBatchAsync(CancellationToken ct = default)
         {

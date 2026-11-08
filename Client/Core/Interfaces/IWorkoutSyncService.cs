@@ -8,11 +8,6 @@ namespace Client.Core.Interfaces
         /// Синхронизировать одну тренировку с сервером
         /// </summary>
         Task<SyncWorkoutResponse> SyncWorkoutAsync(SyncWorkoutRequest request, CancellationToken ct = default);
-
-        /// <summary>
-        /// Синхронизировать все несинхронизированные тренировки
-        /// </summary>
-        Task<int> SyncAllUnsyncedAsync(CancellationToken ct = default);
         
         /// <summary>
         /// Массовая синхронизация всех несинхронизированных тренировок.

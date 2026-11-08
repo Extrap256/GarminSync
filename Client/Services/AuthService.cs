@@ -10,11 +10,18 @@ using Microsoft.Extensions.Options;
 
 namespace Client.Services
 {
-    public class AuthService (IHttpClientFactory httpClientFactory, ITokenStorage tokenStorage, IOptions<ApiSettings> options) : IAuthService
+    public class AuthService (
+        IHttpClientFactory httpClientFactory,
+        ITokenStorage tokenStorage,
+        IOptions<ApiSettings> options) : IAuthService
     {
-        private readonly HttpClient _httpClient = httpClientFactory?.CreateClient("GarminApi") ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        private readonly ITokenStorage _tokenStorage = tokenStorage ?? throw new ArgumentNullException(nameof(tokenStorage));
-        private readonly string _baseUrl = !string.IsNullOrEmpty(options.Value.BaseUrl) ? options.Value.BaseUrl : throw new InvalidOperationException("Отсутствует Api:DaseUrl");
+        private readonly HttpClient _httpClient = httpClientFactory?.CreateClient("GarminApi")
+            ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        private readonly ITokenStorage _tokenStorage = tokenStorage
+            ?? throw new ArgumentNullException(nameof(tokenStorage));
+        private readonly string _baseUrl = !string.IsNullOrEmpty(options.Value.BaseUrl)
+            ? options.Value.BaseUrl
+            : throw new InvalidOperationException("Отсутствует Api:BaseUrl");
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -30,7 +37,7 @@ namespace Client.Services
 #if DEBUG
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine("\n═══════════════════════════════════");
-            Console.WriteLine("📤 HTTP REQUEST:");
+            Console.WriteLine("HTTP REQUEST:");
             Console.WriteLine($"   URL: {_baseUrl}/auth/register");
             Console.WriteLine($"   Method: POST");
             Console.WriteLine($"   Content-Type: {content.Headers.ContentType}");
@@ -71,7 +78,6 @@ namespace Client.Services
 
         public Task LogoutAsync(CancellationToken ct = default)
         {
-            // Добавить очищение локальнойБД
             return _tokenStorage.ClearTokenAsync(ct);
         }
 

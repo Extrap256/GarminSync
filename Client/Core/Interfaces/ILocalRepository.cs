@@ -21,6 +21,7 @@ namespace Client.Core.Interfaces
         /// Сохранение изменений в БД
         /// </summary>
         Task SaveChangeAsync(CancellationToken ct = default);
+
         /// <summary>
         /// Возвращает устройство или null при отсутствии
         /// </summary>
@@ -28,9 +29,23 @@ namespace Client.Core.Interfaces
         /// <returns></returns>
         Task<Device> GetOrCreateDeviceAsync(uint serialNumber);
 
+        /// <summary>
+        /// Получение всех тренировок
+        /// </summary>
         Task<IReadOnlyList<Workout>> GetAllWorkoutsAsync(CancellationToken ct = default);
+
+        /// <summary>
+        /// Получение тренировки по ID
+        /// </summary>
         Task<Workout?> GetWorkoutByIdAsync(int workoutId, CancellationToken ct = default);
+        /// <summary>
+        /// Обновление тренировки
+        /// </summary>
         Task UpdateWorkoutAsync(Workout workout, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Получение или создание виртуального устройства
+        /// </summary>
         Task<Device> GetOrCreateVirtualDeviceAsync(CancellationToken ct = default);
     }
 }

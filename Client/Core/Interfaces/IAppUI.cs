@@ -10,22 +10,18 @@ namespace Client.Core.Interfaces
         /// Добавление вирутальной тренировки
         /// </summary>=
         Task AddVirtualWorkoutAsync(CancellationToken ct = default);
-
         /// <summary>
         /// Вывод меню тренировок
         /// </summary>
         Task WorkoutsMenuAsync(CancellationToken ct = default);
-
         /// <summary>
         /// Вывод менб изменения тренировки по Id
         /// </summary>
         Task EditWorkoutAsync(int workoutId, CancellationToken ct);
-
         /// <summary>
         /// Меню отчетов
         /// </summary>
         Task ReportMenuAsync(CancellationToken ct = default);
-
         /// <summary>
         /// Меню синхронизации с сервером
         /// </summary>
@@ -33,25 +29,21 @@ namespace Client.Core.Interfaces
         /// <summary>
         /// Работа с профилем (вход, регистрация, работа локально)
         /// </summary>
-        Task<AuthAction> ShowAuthMenuAsync(CancellationToken ct = default);
-        
+        Task<AuthAction> ShowAuthMenuAsync(CancellationToken ct = default);        
         /// <summary>
         /// Вывод профиля с возможностью изменения
         /// </summary>
-        Task ProfileMenuAsync(CancellationToken ct = default);
-        
+        Task ProfileMenuAsync(CancellationToken ct = default);        
         /// <summary>
         /// Метод для входа пользователя в систему
         /// </summary>
         /// <returns>Запрос с данными для входа</returns>
         Task<LoginRequest> PromptLoginAsync(CancellationToken ct = default);
-
         /// <summary>
         /// Метод для регистрации нового пользователя
         /// </summary>
         /// <returns>Запрос с даннными регистрации</returns>
         Task<RegisterRequest> PromptRegisterAsync(CancellationToken ct = default);
-
         /// <summary>
         /// Выбор устройства для работы
         /// </summary>

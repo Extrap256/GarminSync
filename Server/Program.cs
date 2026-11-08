@@ -34,7 +34,7 @@ builder.WebHost.ConfigureKestrel(options =>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        //Для локальных тестов
+        //Для http
         options.RequireHttpsMetadata = false;
         options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters()
@@ -55,8 +55,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 var dataSource = dataSourceBuilder.Build();
 
-//builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+// База данных
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(dataSource, npgsqlOptions =>
     {
@@ -68,7 +67,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
             errorCodesToAdd: null);
     }));
 
-// VK BOT
+// VK бот
 builder.Services.Configure<VkBotOptions>(builder.Configuration.GetSection(VkBotOptions.SectionName));
 
 builder.Services.AddSingleton<IVkApi>(sp =>
@@ -84,6 +83,7 @@ builder.Services.AddScoped<IVkMessageSender, VkMessageSender>();
 
 builder.Services.AddScoped<VkBotService>();
 
+// Сервисы бота
 builder.Services.AddScoped<IBotCommand, StartCommand>();
 builder.Services.AddScoped<IBotCommand, RegisterCommand>();
 builder.Services.AddScoped<IBotCommand, LoginCommand>();
@@ -99,11 +99,11 @@ builder.Services.AddScoped<IWorkoutSyncService, WorkoutSyncService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IReportService, ReportService>();
-//Добавить потом сервисы сюда
 
 
 var app = builder.Build();
 
+//Обработчик исключений
 app.Use(async (context, next) =>
 {
     try
@@ -142,12 +142,6 @@ app.Use(async (context, next) =>
     }
 });
 
-
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseHttpsRedirection();
-//}
-
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -158,4 +152,5 @@ app.MapGroupEndpoints();
 app.MapReportEndpoints();
 app.MapVkBotEndpoints();
 
+//Запуск
 app.Run();

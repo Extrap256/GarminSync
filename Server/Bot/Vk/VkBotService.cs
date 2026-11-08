@@ -36,7 +36,8 @@ namespace Server.Bot.Vk
             var root = doc.RootElement;
             var type = root.GetProperty("type").GetString();
 
-            if (type != "message_new") return;
+            if (type != "message_new")
+                return;
 
             var objectEl = root.GetProperty("object");
             var messageEl = objectEl.TryGetProperty("message", out var msg) ? msg : objectEl;
